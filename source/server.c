@@ -90,6 +90,44 @@ int main(int argc, char *argv[]) {
 						return 0;
 					}
 				}
+				
+				if (RcvCompactMessage(MSG_LIST) > 0) {
+					if (!Fork()) {
+						Printf2("Sending user list");
+						
+						int i, j = 0;
+						char roomName[MAX_ROOM_NAME_LENGTH] = {0};
+						int clientQueueID;
+						CLEAR(roomListMessage);
+						
+						P(CLIENT);
+							for (i = 0; i < MAXX; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_id != -1 && !strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
+									strcpy(roomName, MEMORY_POINTER->clients[i].room);
+									clientQueueID = MEMORY_POINTER->clients[i].queue_id;									
+									break;
+								}
+							}
+						
+							if (i == MAXX) {
+								Error("Error in function handling MSG_LIST request.");
+								return 0;
+							}
+						
+							for (int i = 0; i < MAXX; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_id != -1 && !strcmp(MEMORY_POINTER->clients[i].room, roomName)) {
+									strcpy(roomListMessage.content.list[j++], MEMORY_POINTER->clients[i].name); 
+								}
+							}
+						V(CLIENT);
+						
+						roomListMessage.content.id = compactMessage.content.id;
+						roomListMessage.type = MSG_LIST;
+						Snd(clientQueueID, &roomListMessage, sizeof(roomListMessage));
+						return 0;
+					}
+				}
+				
 			}
 		} else {
 			// here send hearbeats

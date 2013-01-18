@@ -6,6 +6,10 @@ void Initialize();
 void ReadServerAdress(int, char*[]);
 void ReadNickNameAndJoinServer();
 
+void debug(char message[]) {
+	 PrintfMessage(GetCurrentTime(), "DEBUG", message, ERROR);
+}
+
 int main(int argc, char *argv[]) {
 
 	Initialize();
@@ -58,11 +62,25 @@ int main(int argc, char *argv[]) {
 			// PrintfMessage(GetCurrentTime(), NICK, "asdf", MESSAGE_SEND);
   		while (1) {
   			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
-//  			char userList[MAX * MAX_USER_NAME_LENGTH] = {0};
-//  			for (int i = 0; i < MAX; ++i) {
-//  				strncpy(userList + strlen(userList), userListMessage.content.list[i], strlen(userListMessage.content.list[i]));
-//				}
-//  				PrintfMessage(GetCurrentTime(), "INFO", roomList, MESSAGE_SEND);
+				
+				char userList[MAXX] = {0};
+				for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
+					if (strlen(roomListMessage.content.list[i])) {
+						strcpy(userList + strlen(userList), " <");
+						strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
+						strcpy(userList + strlen(userList), ">");
+					} else {
+						break;
+					}
+				}
+				
+				char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
+				strcpy(help, "Users in room ");
+				strcpy(help + strlen(help), room);
+				strcpy(help + strlen(help), ": ");
+				
+				PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
+				PrintfMessage("", "", userList, INFO);
   			}
 
   			if (RcvStandardMessage(MSG_ROOM) > 0) {

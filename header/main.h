@@ -71,7 +71,7 @@ typedef struct { // lista pokoi
 	type_t type;
 	struct {
 		unsigned int id;               
-		char list[MAX_USER_COUNT_PER_SERVER * MAX_SERVER_COUNT][MAX_USER_NAME_LENGTH];	
+		char list[MAX_SERVER_COUNT][MAX_USER_NAME_LENGTH];	
 	} content;
 } user_list;
  
