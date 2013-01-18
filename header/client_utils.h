@@ -11,7 +11,7 @@ extern char NICK[16];
 
 standard_message standardMessage;
 compact_message compactMessage;
-user_list userListMessage;
+room_list roomListMessage;
 
 // int Snd(void*);
 // ssize_t Rcv(void*, long);

@@ -71,29 +71,3 @@ ssize_t RcvStandardMessage(type_t type) {
 // 	CLEAR(structure);
 // 	return Msgrcv(CLIENT_QUEUE_ID, structure, sizeof(*structure) + 1, type, IPC_NOWAIT);
 // }
-
-
-char* GetCurrentTime() {
-
-	static char TIME[6];
-	time_t rawtime;
-	struct tm* timeinfo;
-
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(TIME, 6, "%H:%M", timeinfo);
-
-	return TIME;
-}
-
-char* GetTime(time_t *time) {
-
-	static char TIME[6];
-	time_t rawtime = *time;
-	struct tm* timeinfo;
-
-	timeinfo = localtime(&rawtime);
-	strftime(TIME, 6, "%H:%M", timeinfo);
-
-	return TIME;	
-}

@@ -11,7 +11,7 @@ extern int SEMAPHORES_ID;
 
 standard_message standardMessage;
 compact_message compactMessage;
-user_list userListMessage;
+room_list roomListMessage;
 server_message serverMessage;
 
 int SndCompactMessage(int, type_t, int, int);
@@ -33,7 +33,7 @@ void P(int);
 
 #define Printf2(...) \
 		if (DEBUG) { \
-			printf("    "); \
+			printf("	"); \
 			Printf(__VA_ARGS__); \
 		}
 

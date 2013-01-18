@@ -15,7 +15,7 @@ char *GetMessageType(int type);
 //////////////////////////////////////////////////////////////////////////
 int SndCompactMessage(int dest, type_t type, int value, int id) {
 	
-	Printf2("Sending compact message to %d of type %s", dest, GetMessageType(type));
+	Printf("Sending compact message to %d of type %ld\n", dest, type);
 	
 	CLEAR(compactMessage);
 	compactMessage.type = type;
@@ -29,9 +29,7 @@ ssize_t RcvCompactMessage(type_t type) {
 	
 	// printf("Recieving meessage of type %d, queue id is %d\n", type, SERVER_QUEUE_ID);
 	CLEAR(compactMessage);
-//	printf("XX %d\n", SERVER_QUEUE_ID);
 	ssize_t x = Msgrcv(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), type, IPC_NOWAIT);
-//	printf("XXX %d\n", SERVER_QUEUE_ID);
 	if (x > 0) {
 		Printf("Recieved compact message of type %s", GetMessageType(type));	
 	} 
@@ -51,7 +49,7 @@ ssize_t RcvStandardMessage(type_t type) {
 
 int Snd(int destination, void *structure, int size) {
 	
-	Printf2("Sending special message to %d", destination);
+	Printf("Sending special message to %d\n", destination);
 	return Msgsnd(destination, structure, size, 0);
 }
 
@@ -67,14 +65,14 @@ ssize_t Rcv(void *structure, int size, long type) {
 }
 
 void V(int semnum) {
-	Printf2("Semaphore %d up	", semnum);
+	Printf("Semaphore %d up	", semnum);
 	v(SEMAPHORES_ID, semnum);
 }
 
 void P(int semnum) {
-	Printf2("Waiting for semaphore %d", semnum);
+	Printf("Waiting for semaphore %d", semnum);
 	p(SEMAPHORES_ID, semnum);
-	Printf2("Semaphore %d down", semnum);
+	Printf("Semaphore %d down", semnum);
 }
 //////////////////////////////////////// LOCAL
 
