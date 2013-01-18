@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
 	// signal(SIGINT, SIG_IGN);
 	// signal(3, SIG_IGN);
 	// signal(20, SIG_IGN);
+	 signal(SIGCLD, SIG_IGN);
 	
 	ReadMemoryAdress(argc, argv);
 	AttachToIPCUtils();
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				
-				while (RcvStandardMessage(MSG_ROOM) > 0) {
+				if (RcvStandardMessage(MSG_ROOM) > 0) {
 					if (!Fork()) {
 						serverMessage.type = MSG_SERVER;
 						serverMessage.msg = standardMessage;
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				
-				while (Rcv(&serverMessage, sizeof(serverMessage), MSG_SERVER) > 0) {
+				if (Rcv(&serverMessage, sizeof(serverMessage), MSG_SERVER) > 0) {
 					if (!Fork()) {
 						
 						P(CLIENT);
@@ -169,7 +170,6 @@ void AttachToIPCUtils() {
 	/**
 	 * Read and ignore old messages if exists.
 	 */
-	// while (Rcv(&roomListMessage, 0) != -1);
 }
 
 void DettachToIPCUtils() {
@@ -183,7 +183,7 @@ void DettachToIPCUtils() {
 		MEMORY_POINTER->servers[SERVER_NUMBER].queue_id = 0;
 
 		int isLast = 1;
-		for (int i = 0; i < 100; ++i) {
+		for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
 			if (MEMORY_POINTER->servers[i].queue_id) {
 				isLast = 0;
 				break;
@@ -191,15 +191,12 @@ void DettachToIPCUtils() {
 		}
 	V(SERVER);
 
+	shmdt(MEMORY_POINTER);
+	Msgctl(SERVER_QUEUE_ID, IPC_RMID, NULL);
 	if (isLast) {
 		Semctl((int)SEMAPHORES_ID, 0, IPC_RMID, 0);
-		shmdt(MEMORY_POINTER);
 		Shmctl(MEMORY_ID, IPC_RMID, NULL);
-	} else {
-		shmdt(MEMORY_POINTER);
-	}
-
-	Msgctl(SERVER_QUEUE_ID, IPC_RMID, NULL);
+	} 
 }
 
 void RegisterUser() {
