@@ -14,7 +14,7 @@ int SERVER_NUMBER;
 
 extern standard_message standardMessage;
 extern compact_message compactMessage;
-extern user_list userListMessage;
+extern room_list roomListMessage;
 extern server_message serverMessage;
 
 #endif

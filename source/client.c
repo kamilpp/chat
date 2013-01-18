@@ -38,9 +38,7 @@ int main(int argc, char *argv[]) {
 				}	
 
 				if (!strncmp(txt, "/join", 5)) {
-					// (char*)memmove(txt, txt + 6, strlen(txt + 6))
-					// PrintfMessage(GetCurrentTime(), "DEBUG", strcpy(txt, txt+6), ERROR);
-					//SndStandardMessage(MSG_JOIN, strcpy(txt, txt+6));
+					// SndCompactMessage(MSG_LIST, 0);
 				}
     		} else {
     			SndStandardMessage(MSG_ROOM, txt);
@@ -53,25 +51,16 @@ int main(int argc, char *argv[]) {
 		// execlp("ls", "ls", NULL);
 			// PrintfMessage(GetCurrentTime(), NICK, "asdf", MESSAGE_SEND);
   		while (1) {
-  			if (Msgrcv(CLIENT_QUEUE_ID, &userListMessage, sizeof(userListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
-  				char userList[MAX * MAX_USER_NAME_LENGTH] = {0};
-  				for (int i = 0; i < MAX; ++i) {
-  					strncpy(userList + strlen(userList), userListMessage.content.list[i], strlen(userListMessage.content.list[i]));
-  				}
-  				PrintfMessage(GetCurrentTime(), "INFO", userList, MESSAGE_SEND);
-  			}
-
-  			if (RcvStandardMessage(MSG_ROOM) > 0) {
-  				PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
-  			}
-
-  			if (RcvCompactMessage(MSG_JOIN) > 0) {
-  				// if (compactMessage.content.status == )
+  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
+				// char roomList  				
+  				// PrintfMessage(GetCurrentTime(), INFO, roomListMessage., MESSAGE_SEND);
   			}
   		}
 		return 0; 		
 		// while(1);  		
   	}
+
+	getch();
 
 	TerminateNcurses();
 	Msgctl(CLIENT_QUEUE_ID, IPC_RMID, NULL);
@@ -108,7 +97,7 @@ void Initialize() {
 	// signal(20, SIG_IGN);
 
 	CLIENT_QUEUE_ID = Msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
-	// while (Rcv(&userListMessage, 0) != -1);
+	// while (Rcv(&roomListMessage, 0) != -1);
 }
 
 /**
