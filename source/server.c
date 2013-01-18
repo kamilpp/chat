@@ -32,7 +32,29 @@ int main(int argc, char *argv[]) {
 						return 0;
 					}
 				}
+				if (RcvCompactMessage(MSG_UNREGISTER) > 0) {
+					if (!Fork()) {
+						Printf("Unregistering user");
+						int i;
 
+						P(CLIENT);
+							for (i = 0; i < MAXX; ++i) {
+								if (!strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
+									break;
+								}
+							}
+
+							if (i == MAXX) {
+								Printf2("Unregistering failed. User name - %s - not found.", compactMessage.content.sender);
+							} else {
+								memset(&(MEMORY_POINTER->clients[i]), 0, sizeof(client));
+								Printf2("Unregistering succeed. User - %s - unregisterd.", compactMessage.content.sender);
+							}
+						V(CLIENT);
+						return 0;
+					}
+				}
+				
 				while (RcvStandardMessage(MSG_ROOM) > 0) {
 					if (!Fork()) {
 						serverMessage.type = MSG_SERVER;
@@ -47,13 +69,16 @@ int main(int argc, char *argv[]) {
 						return 0;
 					}
 				}
+				
 				while (Rcv(&serverMessage, sizeof(serverMessage), MSG_SERVER) > 0) {
 					if (!Fork()) {
+						
 						P(CLIENT);
+							Printf2("Recieved message to room %s", serverMessage.msg.content.recipient);
 							if (serverMessage.msg.type == MSG_ROOM) {
-								int MAX = MAX_SERVER_COUNT * MAX_USER_COUNT_PER_SERVER;
-								for (int i = 0; i < MAX; ++i) {
-									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && MEMORY_POINTER->clients[i].queue_id && !strcmp(serverMessage.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
+								for (int i = 0; i < MAXX; ++i) {
+									if (MEMORY_POINTER->clients[i].queue_id) Printf("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_id, SERVER_QUEUE_ID, serverMessage.msg.content.sender, MEMORY_POINTER->clients[i].name)
+									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && strcmp(serverMessage.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
 										Snd(MEMORY_POINTER->clients[i].queue_id, &(serverMessage.msg), sizeof(standardMessage));
 									}
 								}
@@ -133,7 +158,7 @@ void AttachToIPCUtils() {
 		while (MEMORY_POINTER->servers[++SERVER_NUMBER].queue_id);
 		
 		SERVER_QUEUE_ID = Msgget(256 + SERVER_NUMBER, 0600 | IPC_CREAT);
-		printf("Server message queue ID is %d", SERVER_QUEUE_ID);
+		printf("Server message queue ID is %d\n", SERVER_QUEUE_ID);
 		
 		MEMORY_POINTER->servers[SERVER_NUMBER].queue_id = SERVER_QUEUE_ID;
 	V(SERVER);
@@ -179,13 +204,12 @@ void DettachToIPCUtils() {
 
 void RegisterUser() {
 
-	int MAX = MAX_SERVER_COUNT * MAX_USER_COUNT_PER_SERVER;
 	int alreadyExists = 0;
-	int j = MAX;
+	int j = MAXX;
 	int clientQueueID = compactMessage.content.value;
 	
 	P(CLIENT);
-		for (int i = 0; i < MAX; ++i) {
+		for (int i = 0; i < MAXX; ++i) {
 			if (MEMORY_POINTER->clients[i].queue_id == 0) j = min(i, j);
 			if (!strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
 				alreadyExists = 1;
@@ -194,7 +218,7 @@ void RegisterUser() {
 		}
 
 		if (alreadyExists == 0) {
-			MEMORY_POINTER->clients[j].queue_id = SERVER_QUEUE_ID;
+			MEMORY_POINTER->clients[j].server_queue_id = SERVER_QUEUE_ID;
 			MEMORY_POINTER->clients[j].queue_id = clientQueueID;
 			strcpy(MEMORY_POINTER->clients[j].name, compactMessage.content.sender);
 			strcpy(MEMORY_POINTER->clients[j].room, GLOBAL_ROOM_NAME);

@@ -22,7 +22,7 @@ void Error(char[]);
 #define SERVER 	0
 #define CLIENT 	1
 #define LOG		2
-
+#define MAXX MAX_SERVER_COUNT * MAX_USER_COUNT_PER_SERVER
 /*******************************************************
   * CHAT_DATA_H - BEGIN
   */
