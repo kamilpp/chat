@@ -73,7 +73,7 @@ typedef struct { // lista pokoi
 		unsigned int id;               
 		char list[MAX_USER_COUNT_PER_SERVER * MAX_SERVER_COUNT][MAX_USER_NAME_LENGTH];	
 	} content;
-} room_list;
+} user_list;
  
 typedef struct { // wiadomość serwer-serwer
 	type_t type; // always MSG_SERVER

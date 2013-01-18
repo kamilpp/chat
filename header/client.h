@@ -14,6 +14,6 @@ int connectionStatus;
 
 extern standard_message standardMessage;
 extern compact_message compactMessage;
-extern room_list roomListMessage;
+extern user_list roomListMessage;
 
 #endif

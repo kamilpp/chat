@@ -11,7 +11,7 @@ extern int SEMAPHORES_ID;
 
 standard_message standardMessage;
 compact_message compactMessage;
-room_list roomListMessage;
+user_list roomListMessage;
 server_message serverMessage;
 
 int SndCompactMessage(int, type_t, int, int);

@@ -25,22 +25,26 @@ int main(int argc, char *argv[]) {
     			continue;
     		}
     		if (txt[0] == '/') {
-				if (!strcmp(txt, "/quit")) {
+				if (!strncmp(txt, "/quit", 5)) {
 					SndCompactMessage(MSG_UNREGISTER, 0);
 					kill(pid, SIGTERM);
 					break;
-				}	
-				if (!strcmp(txt, "/list")) {
+				} else if (!strncmp(txt, "/list", 5)) {
 					SndCompactMessage(MSG_LIST, 0);
-				}		
-				if (!strncmp(txt, "/pm", 3)) {
+				} else if (!strncmp(txt, "/pm", 3)) {
 					// SndCompactMessage(MSG_LIST, 0);
-				}	
-
-				if (!strncmp(txt, "/join", 5)) {
-					// (char*)memmove(txt, txt + 6, strlen(txt + 6))
-					// PrintfMessage(GetCurrentTime(), "DEBUG", strcpy(txt, txt+6), ERROR);
+				} else if (!strncmp(txt, "/join", 5)) {
+					 strcpy(txt, txt+6);
+					 PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
 					//SndStandardMessage(MSG_JOIN, strcpy(txt, txt+6));
+				} else if (!strncmp(txt, "/help", 5)) {
+					 PrintfMessage(GetCurrentTime(), "HELP", "USE:", INFO);
+					 PrintfMessage("", "", "/join [room_name] - to enter a room,", INFO);
+					 PrintfMessage("", "", "/pm [nick_name] [message] - to send private message,", INFO);
+					 PrintfMessage("", "", "/list - to display user list,", INFO);
+					 PrintfMessage("", "", "/quit - to terminate chat.", INFO);
+				} else {
+					 PrintfMessage(GetCurrentTime(), "INFO", "Command not found. Use /help to get some info.", INFO);
 				}
     		} else {
     			SndStandardMessage(MSG_ROOM, txt);
