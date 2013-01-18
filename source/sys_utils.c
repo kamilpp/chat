@@ -133,24 +133,22 @@ int Msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg) {
 	if (x < 0) {
 		int err = errno;
 		// if (err == EAGAIN) return x;
-		if (err == EINVAL) Error("Program error (msgsnd)"); // bledne parametry
-		if (err == EIDRM)  Error("Program error (msgsnd)"); // przeznaczona do usuniecia
+		if (err == EINVAL) Error("Wrong parameters [id?] (msgsnd)"); // bledne parametry
+		if (err == EIDRM)  Error("Queue deleted! (msgsnd)"); // przeznaczona do usuniecia
 		Error("Error on msgsnd");
 	}
 	return x;
 }
 
 ssize_t Msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg) {
-	printf("LOOOL %d\n", msqid);
 	ssize_t x = msgrcv(msqid, msgp, msgsz + 2, msgtyp, msgflg);
-	printf("LOOOL222 %d\n", msqid);
 	if (x < 0) {
 		int err = errno;
 		// if (err == EAGAIN) return x;
 		if (err == ENOMSG) return -1;
+		if (err == EINVAL) Error("Wrong parameters [id?] (msgrv)"); // bledne parametry
+		if (err == EIDRM)  Error("Queue deleted! (msgrcv)"); // przeznaczona do usuniecia
 		printf("EEEEEEEEEROOOOOR id = %d, size = %d, type = %d, flags = %d\n", msqid, (int)msgsz, (int)msgtyp, (int)msgflg);
-		if (err == EINVAL) Error("Program error (msgrcv)"); // bledne parametry
-		if (err == EIDRM)  Error("Program error (msgrcv)"); // przeznaczona do usuniecia
 		Error("Error on msgrcv");
 	}
 	// printf("LOOOL222 %d\n", msqid);

@@ -29,9 +29,9 @@ ssize_t RcvCompactMessage(type_t type) {
 	
 	// printf("Recieving meessage of type %d, queue id is %d\n", type, SERVER_QUEUE_ID);
 	CLEAR(compactMessage);
-	printf("XX %d\n", SERVER_QUEUE_ID);
+//	printf("XX %d\n", SERVER_QUEUE_ID);
 	ssize_t x = Msgrcv(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), type, IPC_NOWAIT);
-	printf("XXX %d\n", SERVER_QUEUE_ID);
+//	printf("XXX %d\n", SERVER_QUEUE_ID);
 	if (x > 0) {
 		Printf("Recieved compact message of type %s", GetMessageType(type));	
 	} 

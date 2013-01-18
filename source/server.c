@@ -27,11 +27,10 @@ int main(int argc, char *argv[]) {
 		} while(symbol != 'q');
 		kill(pid, SIGTERM);
 	} else {
+		int bug = SERVER_QUEUE_ID;
 		if (Fork()) {
 			while (1) {
-				sleep(1);
-				printf("%d\n", SERVER_QUEUE_ID);
-
+				SERVER_QUEUE_ID = bug;
 				if (RcvCompactMessage(MSG_REGISTER) > 0) {
 					if (!Fork()) {
 						Printf("Registering user");
@@ -40,14 +39,9 @@ int main(int argc, char *argv[]) {
 					}
 				}
 
-				printf("%d\n", SERVER_QUEUE_ID);
 				if (RcvCompactMessage(MSG_UNREGISTER) > 0) {
-					printf("%d\n", SERVER_QUEUE_ID);
-
 					if (!Fork()) {
 						Printf("Unregistering user");
-				printf("%d\n", SERVER_QUEUE_ID);
-
 						int i;
 
 						P(CLIENT);
@@ -69,38 +63,38 @@ int main(int argc, char *argv[]) {
 					}
 				}
 
-				if (RcvStandardMessage(MSG_ROOM) > 0) {
-					if (!Fork()) {
-						serverMessage.type = MSG_SERVER;
-						serverMessage.content.msg = standardMessage;
-						P(SERVER);
-							for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
-								if (MEMORY_POINTER->servers[i].queue_id) {
-									Snd(MEMORY_POINTER->servers[i].queue_id, &serverMessage, sizeof(serverMessage));							
-								}
-							}	
-						V(SERVER);
-						return 0;
-					}
-				}
-
-				if (Rcv(&serverMessage, sizeof(serverMessage), MSG_SERVER) > 0) {
-					if (!Fork()) {
-						P(CLIENT);
-							if (serverMessage.content.msg.type == MSG_ROOM) {
-								for (int i = 0; i < MAX; ++i) {
-									if (MEMORY_POINTER->clients[i].queue_id) Printf("Comparing %d %d, %d != 0 and %s != %s", MEMORY_POINTER->clients[i].server_queue_id, SERVER_QUEUE_ID, MEMORY_POINTER->clients[i].queue_id, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
-									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && MEMORY_POINTER->clients[i].queue_id && strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
-										Snd(MEMORY_POINTER->clients[i].queue_id, &(serverMessage.content.msg), sizeof(standardMessage));
-									}
-								}
-							} else if (serverMessage.content.msg.type == MSG_PRIVATE) {
-
-							}
-						V(CLIENT);
-						return 0;
-					}
-				}
+//				if (RcvStandardMessage(MSG_ROOM) > 0) {
+//					if (!Fork()) {
+//						serverMessage.type = MSG_SERVER;
+//						serverMessage.content.msg = standardMessage;
+//						P(SERVER);
+//							for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
+//								if (MEMORY_POINTER->servers[i].queue_id) {
+//									Snd(MEMORY_POINTER->servers[i].queue_id, &serverMessage, sizeof(serverMessage));							
+//								}
+//							}	
+//						V(SERVER);
+//						return 0;
+//					}
+//				}
+//
+//				if (Rcv(&serverMessage, sizeof(serverMessage), MSG_SERVER) > 0) {
+//					if (!Fork()) {
+//						P(CLIENT);
+//							if (serverMessage.content.msg.type == MSG_ROOM) {
+//								for (int i = 0; i < MAX; ++i) {
+//									if (MEMORY_POINTER->clients[i].queue_id) Printf("Comparing %d %d, %d != 0 and %s != %s", MEMORY_POINTER->clients[i].server_queue_id, SERVER_QUEUE_ID, MEMORY_POINTER->clients[i].queue_id, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
+//									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && MEMORY_POINTER->clients[i].queue_id && strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
+//										Snd(MEMORY_POINTER->clients[i].queue_id, &(serverMessage.content.msg), sizeof(standardMessage));
+//									}
+//								}
+//							} else if (serverMessage.content.msg.type == MSG_PRIVATE) {
+//
+//							}
+//						V(CLIENT);
+//						return 0;
+//					}
+//				}
 			}
 		} else {
 			// here send hearbeats
