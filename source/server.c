@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 				if (RcvStandardMessage(MSG_ROOM) > 0) {
 					if (!Fork()) {
 						serverMessage.type = MSG_SERVER;
-						serverMessage.msg = standardMessage;
+						serverMessage.content.msg = standardMessage;
 						P(SERVER);
 							for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
 								if (MEMORY_POINTER->servers[i].queue_id) {
@@ -75,15 +75,15 @@ int main(int argc, char *argv[]) {
 					if (!Fork()) {
 						
 						P(CLIENT);
-							Printf2("Recieved message to room %s", serverMessage.msg.content.recipient);
-							if (serverMessage.msg.type == MSG_ROOM) {
+							Printf2("Recieved message to room %s", serverMessage.content.msg.content.recipient);
+							if (serverMessage.content.msg.type == MSG_ROOM) {
 								for (int i = 0; i < MAXX; ++i) {
-									if (MEMORY_POINTER->clients[i].queue_id) Printf("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_id, SERVER_QUEUE_ID, serverMessage.msg.content.sender, MEMORY_POINTER->clients[i].name)
-									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && strcmp(serverMessage.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
-										Snd(MEMORY_POINTER->clients[i].queue_id, &(serverMessage.msg), sizeof(standardMessage));
+									if (MEMORY_POINTER->clients[i].queue_id) Printf("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_id, SERVER_QUEUE_ID, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
+									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
+										Snd(MEMORY_POINTER->clients[i].queue_id, &(serverMessage.content.msg), sizeof(standardMessage));
 									}
 								}
-							} else if (serverMessage.msg.type == MSG_PRIVATE) {
+							} else if (serverMessage.content.msg.type == MSG_PRIVATE) {
 
 							}
 						V(CLIENT);
