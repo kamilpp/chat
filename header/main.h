@@ -15,6 +15,8 @@
 #define MALLOC(typ) (typ*)malloc(sizeof(typ))
 #define CLEAR(co) memset(&co, 0, sizeof(&co))
 char* GetCurrentTime();
+char* GetTime(time_t *time);
+
 void Error(char[]);
 
 #define SERVER 	0

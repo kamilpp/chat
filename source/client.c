@@ -54,9 +54,20 @@ int main(int argc, char *argv[]) {
 			// PrintfMessage(GetCurrentTime(), NICK, "asdf", MESSAGE_SEND);
   		while (1) {
   			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
-				// char roomList  				
-  				// PrintfMessage(GetCurrentTime(), INFO, roomListMessage., MESSAGE_SEND);
+//  			char userList[MAX * MAX_USER_NAME_LENGTH] = {0};
+//  			for (int i = 0; i < MAX; ++i) {
+//  				strncpy(userList + strlen(userList), userListMessage.content.list[i], strlen(userListMessage.content.list[i]));
+//				}
+//  				PrintfMessage(GetCurrentTime(), "INFO", roomList, MESSAGE_SEND);
   			}
+
+  			if (RcvStandardMessage(MSG_ROOM) > 0) {
+  				PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
+  			}
+//
+//  			if (RcvCompactMessage(MSG_JOIN) > 0) {
+//  				// if (compactMessage.content.status == )
+//  			}
   		}
 		return 0; 		
 		// while(1);  		
@@ -97,7 +108,7 @@ void Initialize() {
 	// signal(20, SIG_IGN);
 
 	CLIENT_QUEUE_ID = Msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
-	// while (Rcv(&roomListMessage, 0) != -1);
+	while (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage), 0, IPC_NOWAIT) != -1);
 }
 
 /**

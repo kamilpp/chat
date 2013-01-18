@@ -13,6 +13,18 @@ char* GetCurrentTime() {
 	return TIME;
 }
 
+char* GetTime(time_t *time) {
+
+	static char TIME[6];
+	time_t rawtime = *time;
+	struct tm* timeinfo;
+
+	timeinfo = localtime(&rawtime);
+	strftime(TIME, 6, "%H:%M", timeinfo);
+
+	return TIME;	
+}
+
 void Error(char message[]) {
 
 	perror(message);
