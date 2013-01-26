@@ -10,43 +10,36 @@ int GetMessageID() {
 }
 ///////////////////////////////////////
 
-int SndPrivateMessage(char message[512], char recipient[MAX_USER_NAME_LENGTH]) {
+int SndStandardMessage(type_t type, char message[512], char recipient[MAX_USER_NAME_LENGTH]) {
+	
+	int id = GetMessageID();
 
 	CLEAR(standardMessage);
-	standardMessage.type = MSG_PRIVATE;
-	standardMessage.content.id = GetMessageID();
+	standardMessage.type = type;
+	standardMessage.content.id = id;
 	time_t rawtime; time(&rawtime);
 	standardMessage.content.send_date = rawtime;
 	strcpy(standardMessage.content.sender, NICK);
 	strcpy(standardMessage.content.recipient, recipient);
 	strcpy(standardMessage.content.message, message);
 
-	return Msgsnd(SERVER_QUEUE_ID, &standardMessage, sizeof(standardMessage), 0);
-}
-
-int SndStandardMessage(type_t type, char message[512]) {
-	
-	CLEAR(standardMessage);
-	standardMessage.type = type;
-	standardMessage.content.id = GetMessageID();
-	time_t rawtime; time(&rawtime);
-	standardMessage.content.send_date = rawtime;
-	strcpy(standardMessage.content.sender, NICK);
-	strcpy(standardMessage.content.message, message);
-
-	return Msgsnd(SERVER_QUEUE_ID, &standardMessage, sizeof(standardMessage), 0);
+	Msgsnd(SERVER_QUEUE_ID, &standardMessage, sizeof(standardMessage), 0);
+	return id;
 }
 
 int SndCompactMessage(type_t type, int value) {
+	
+	int id = GetMessageID();
 	
 	CLEAR(compactMessage);
 	compactMessage.type = type;
 	compactMessage.content.value = value;
 	strcpy(compactMessage.content.sender, NICK);
-	compactMessage.content.id = GetMessageID();
+	compactMessage.content.id = id;
 
 	// printf("Sending to %d\n", SERVER_QUEUE_ID);
-	return Msgsnd(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), 0);
+	Msgsnd(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), 0);
+	return id;
 }
 
 ssize_t RcvCompactMessage(type_t type) {

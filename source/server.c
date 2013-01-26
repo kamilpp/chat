@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 								if (MEMORY_POINTER->servers[i].queue_id) {
 									Snd(MEMORY_POINTER->servers[i].queue_id, &serverMessage, sizeof(serverMessage));							
 								}
-							}	
+							}		
 						V(SERVER);
 						return 0;
 					}
@@ -79,7 +79,8 @@ int main(int argc, char *argv[]) {
 							if (serverMessage.content.msg.type == MSG_ROOM) {
 								for (int i = 0; i < MAXX; ++i) {
 									if (MEMORY_POINTER->clients[i].queue_id) Printf("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_id, SERVER_QUEUE_ID, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
-									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
+									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name) && !strcmp(serverMessage.content.msg.content.recipient, MEMORY_POINTER->clients[i].room)) {
+//									if (MEMORY_POINTER->clients[i].server_queue_id == SERVER_QUEUE_ID && strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)) {
 										Snd(MEMORY_POINTER->clients[i].queue_id, &(serverMessage.content.msg), sizeof(standardMessage));
 									}
 								}
@@ -127,7 +128,29 @@ int main(int argc, char *argv[]) {
 						return 0;
 					}
 				}
-				
+				if (RcvStandardMessage(MSG_JOIN) > 0) {
+					if (!fork()) {
+						
+						int clientQueueID = -1;
+						P(CLIENT);
+							Printf2("User %s joining room %s", standardMessage.content.sender, standardMessage.content.message);
+							for (int i = 0; i < MAXX; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_id != -1 && !strcmp(MEMORY_POINTER->clients[i].name, standardMessage.content.sender)) {
+									strcpy(MEMORY_POINTER->clients[i].room, standardMessage.content.message);
+									clientQueueID = MEMORY_POINTER->clients[i].queue_id;
+									break;
+								}
+							}
+						V(CLIENT);
+						if (clientQueueID != -1) {
+							printf("%d\n", standardMessage.content.id);
+							SndCompactMessage(clientQueueID, MSG_JOIN, 0, standardMessage.content.id);
+						} else {
+							Error("Error while handling MSG_JOIN.");
+						}
+						return 0;
+					}
+				}
 			}
 		} else {
 			// here send hearbeats
@@ -197,6 +220,7 @@ void AttachToIPCUtils() {
 		while (MEMORY_POINTER->servers[++SERVER_NUMBER].queue_id);
 		
 		SERVER_QUEUE_ID = Msgget(256 + SERVER_NUMBER, 0600 | IPC_CREAT);
+		while (Rcv(&roomListMessage, sizeof(roomListMessage), 0) != -1);
 		printf("Server message queue ID is %d\n", SERVER_QUEUE_ID);
 		
 		MEMORY_POINTER->servers[SERVER_NUMBER].queue_id = SERVER_QUEUE_ID;

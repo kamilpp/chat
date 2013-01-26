@@ -10,6 +10,8 @@ int CLIENT_QUEUE_ID;
 char NICK[16];
 
 char room[16];
+char roomRequested[16];
+int roomRequestedMessageID;
 int connectionStatus;
 
 extern standard_message standardMessage;

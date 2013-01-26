@@ -18,8 +18,7 @@ user_list roomListMessage;
 
 int GetMessageID();
 
-int SndStandardMessage(type_t, char[]);
-int SndPrivateMessage(char[], char[]);
+int SndStandardMessage(type_t, char[], char[]);
 int SndCompactMessage(type_t, int);
 
 ssize_t RcvCompactMessage(type_t);

@@ -38,20 +38,21 @@ int main(int argc, char *argv[]) {
 				} else if (!strncmp(txt, "/pm", 3)) {
 					// SndCompactMessage(MSG_LIST, 0);
 				} else if (!strncmp(txt, "/join", 5)) {
-					 strcpy(txt, txt+6);
-					 PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
-					//SndStandardMessage(MSG_JOIN, strcpy(txt, txt+6));
+					strcpy(txt, txt+6);
+					PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
+					strcpy(roomRequested, txt);
+					roomRequestedMessageID = SndStandardMessage(MSG_JOIN, txt, "");
 				} else if (!strncmp(txt, "/help", 5)) {
-					 PrintfMessage(GetCurrentTime(), "HELP", "USE:", INFO);
-					 PrintfMessage("", "", "/join [room_name] - to enter a room,", INFO);
-					 PrintfMessage("", "", "/pm [nick_name] [message] - to send private message,", INFO);
-					 PrintfMessage("", "", "/list - to display user list,", INFO);
-					 PrintfMessage("", "", "/quit - to terminate chat.", INFO);
+					PrintfMessage(GetCurrentTime(), "HELP", "USE:", INFO);
+					PrintfMessage("", "", "/join [room_name] - to enter a room,", INFO);
+					PrintfMessage("", "", "/pm [nick_name] [message] - to send private message,", INFO);
+					PrintfMessage("", "", "/list - to display user list,", INFO);
+					PrintfMessage("", "", "/quit - to terminate chat.", INFO);
 				} else {
-					 PrintfMessage(GetCurrentTime(), "INFO", "Command not found. Use /help to get some info.", INFO);
+					PrintfMessage(GetCurrentTime(), "INFO", "Command not found. Use /help to get some info.", INFO);
 				}
     		} else {
-    			SndStandardMessage(MSG_ROOM, txt);
+    			SndStandardMessage(MSG_ROOM, txt, room);
 				PrintfMessage(GetCurrentTime(), NICK, txt, MESSAGE_SEND);
     		}
   			// PrintfStatusBar();
@@ -86,6 +87,14 @@ int main(int argc, char *argv[]) {
   			if (RcvStandardMessage(MSG_ROOM) > 0) {
   				PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
   			}
+			
+			if (RcvCompactMessage(MSG_JOIN) > 0) {
+				printf("%d %d \n", compactMessage.content.id, roomRequestedMessageID);
+				if (compactMessage.content.id == roomRequestedMessageID) { 
+					strcpy(room, roomRequested);
+					PrintfMessage(GetCurrentTime(), "INFO", "You have changed room.", INFO);
+				}
+			}
 //
 //  			if (RcvCompactMessage(MSG_JOIN) > 0) {
 //  				// if (compactMessage.content.status == )
