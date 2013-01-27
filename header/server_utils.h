@@ -40,4 +40,9 @@ int GetMessageID();
 			Printf(__VA_ARGS__); \
 		}
 
+#define Printf3(...) \
+		if (DEBUG) { \
+			printf("	"); \
+			Printf2(__VA_ARGS__); \
+		}
 #endif

@@ -132,7 +132,7 @@ int Msgget(key_t key, int msgflg) {
 }
 
 int Msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg) {
-	int x = msgsnd(msqid, msgp, msgsz + 1, msgflg);
+	int x = msgsnd(msqid, msgp, msgsz, msgflg);
 	if (x < 0) {
 		int err = errno;
 		// if (err == EAGAIN) return x;
@@ -152,7 +152,7 @@ ssize_t Msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg) {
 		// if (err == EAGAIN) return x;
 		if (err == ENOMSG) return -1;
 		if (err == EINVAL) Error("Program error (msgrcv)"); // bledne parametry
-		if (err == EIDRM && msgflg)  Error("Program error (msgrcv)"); // przeznaczona do usuniecia
+		if (err == EIDRM)  Error("Program error (msgrcv)"); // przeznaczona do usuniecia
 		Error("Error on msgrcv");
 	}
 	return x;

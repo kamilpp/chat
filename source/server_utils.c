@@ -41,11 +41,17 @@ ssize_t RcvCompactMessage(type_t type) {
 }
 
 ssize_t RcvHeartBeat() {
+	
 	CLEAR(compactMessage);
-	ssize_t x = msgrcv(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), MSG_HEARTBEAT, IPC_NOWAIT);
+	ssize_t x = Msgrcv(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), MSG_HEARTBEAT, IPC_NOWAIT);
 	if (x > 0) {
 		Printf("Recieved compact message of type %s [%s]", GetMessageType(MSG_HEARTBEAT), compactMessage.content.sender);	
 	} 
+	else if (x < 0) {
+		int errno;
+		if (errno == ENOMSG) return 0;
+		Error("Error on hearbeat");
+	}
 	return x;
 }
 

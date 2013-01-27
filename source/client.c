@@ -130,22 +130,29 @@ int main(int argc, char *argv[]) {
 				
 				if (RcvCompactMessage(MSG_JOIN) > 0) {
 					debug("Recivied message join");
-					kill(parentID, SIGUSR1);
+					kill(parentID, SIGUSR1); // send signal to join room
 				}
 			} 
   		} else {
 			/**
 			 * Heartbeat process.
 			 */
+			int status;
+			
 			while (1) {
-				if (RcvHeartBeat() > 0) {
+				status = RcvHeartBeat();
+				if (status > 0) {
+					debug("Recieved hearbeat");
 					SndHeartBeat(compactMessage.content.id);
+				}
+				
+				if (status == -1) {
+					return 0;
 				}
 			}
 		} /* Heartbeat process.*/
 		
-		return 0; 		
-		// while(1);  		
+		return 0; 			
   	}
 
 	TerminateNcurses();
@@ -186,7 +193,7 @@ void Initialize() {
 	
 	do {
 		CLIENT_QUEUE_KEY = Random();
-		CLIENT_QUEUE_ID = Msgget(CLIENT_QUEUE_KEY, 0600 | IPC_CREAT | IPC_EXCL);
+		CLIENT_QUEUE_ID = Msgget(CLIENT_QUEUE_KEY, 0777 | IPC_CREAT | IPC_EXCL);
 	} while (CLIENT_QUEUE_ID == -1);
 }
 
@@ -210,14 +217,14 @@ void ReadServerAdress(int argc, char *argv[]) {
 	 * Convert hexadecimal server adress into binary.
 	 */
 	while (1) {
-		SERVER_QUEUE_ID = Msgget((int)strtol(serverQueueKey, NULL, 10), 0600 | IPC_CREAT | IPC_EXCL);
+		SERVER_QUEUE_ID = Msgget((int)strtol(serverQueueKey, NULL, 10), 0777 | IPC_CREAT | IPC_EXCL);
 		
 		if (SERVER_QUEUE_ID != -1) {
 			PrintfMessage(GetCurrentTime(), "ERROR", "Queue with typed key does not exists!.", ERROR);
 			PrintfMessage(GetCurrentTime(), "CONFIG", "Type server queue identifier...", CONFIG);
 			getstr(serverQueueKey); 
 		} else {
-			SERVER_QUEUE_ID = Msgget((int)strtol(serverQueueKey, NULL, 10), 0600);
+			SERVER_QUEUE_ID = Msgget((int)strtol(serverQueueKey, NULL, 10), 0777);
 			break;
 		}
 	} 

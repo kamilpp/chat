@@ -115,12 +115,13 @@ void Error(char[]);
 
 TODO:
  * 
- * GUI
+ * GUI - kolory, poprawność
  * zabezpieczenie przed max liczbą sewerów?
  * plik logu
  * msg_LIST
- * msg_private
- *  
+ * q (error) 
+ * 
+ * 
  * QUESTIONS:
  *  co jeśli zamkniemy serwer
 */

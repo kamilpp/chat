@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 								for (int i = 0; i < MAX_CLIENTS; ++i) {
 									if (MEMORY_POINTER->clients[i].queue_key != -1) {
 //										
-										Printf2("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_key, SERVER_QUEUE_ID, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
+										Printf2("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_key, SERVER_QUEUE_KEY, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
 										if (MEMORY_POINTER->clients[i].server_queue_key == SERVER_QUEUE_KEY && 
 										strcmp(serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name) && 
 										!strcmp(serverMessage.content.msg.content.recipient, MEMORY_POINTER->clients[i].room)) {
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 								for (int i = 0; i < MAX_CLIENTS; ++i) {
 									if (MEMORY_POINTER->clients[i].queue_key != -1) {
 //										
-										Printf2("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_key, SERVER_QUEUE_ID, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
+										Printf2("Comparing %d == %d and %s == %s", MEMORY_POINTER->clients[i].server_queue_key, SERVER_QUEUE_KEY, serverMessage.content.msg.content.recipient, MEMORY_POINTER->clients[i].name)
 										if (MEMORY_POINTER->clients[i].server_queue_key == SERVER_QUEUE_KEY &&  
 										!strcmp(serverMessage.content.msg.content.recipient, MEMORY_POINTER->clients[i].name)) {
 											Snd(MEMORY_POINTER->clients[i].queue_key, &(serverMessage.content.msg), sizeof(standardMessage));
@@ -189,6 +189,8 @@ int main(int argc, char *argv[]) {
 			char username[MAX_USER_COUNT_PER_SERVER][MAX_USER_NAME_LENGTH];
 			
 			while (1) {
+				Printf3("Retrieving heartbeats...");
+				
 				memset(id, -1, sizeof(id));
 				CLEAR(username);
 				j = 0;
@@ -206,9 +208,11 @@ int main(int argc, char *argv[]) {
 				V(CLIENT);
 				
 				sleep(2);
+				if (getppid() == 1) { // parent process died
+					return 0;
+				}
 				
-				
-				while ((j = RcvHeartBeat()) > 0) {
+				while (RcvHeartBeat() > 0) {
 					for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
 						if (id[i] == compactMessage.content.id) {
 							id[i] = -1;
@@ -216,10 +220,6 @@ int main(int argc, char *argv[]) {
 						} 
 					}
 				} 
-				
-				if (j < 0) {
-					return 0; // Error - process terminated.
-				}
 				
 				for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
 					if (id[i] != -1) {
@@ -249,18 +249,18 @@ void AttachToIPCUtils(int argc, char *args[]) {
 	int created = 0;
 	if (argc >= 2) {
 		MEMORY_ADDRESS = (int)strtol(args[1], NULL, 10);
-		MEMORY_ID = Shmget(MEMORY_ADDRESS, sizeof(shm_type), 0600 | IPC_CREAT | IPC_EXCL);
+		MEMORY_ID = Shmget(MEMORY_ADDRESS, sizeof(shm_type), 0777 | IPC_CREAT | IPC_EXCL);
 		
 		if (MEMORY_ID != -1)  {
 			Shmctl(MEMORY_ID, IPC_RMID, NULL);
 			created = 1;
 			printf("TYPED MEMORY SEGMENT DOES NOT EXISTS! [address %d]\n", MEMORY_ADDRESS);
 		} else {
-			MEMORY_ID = Shmget(MEMORY_ADDRESS, sizeof(shm_type), 0600);
+			MEMORY_ID = Shmget(MEMORY_ADDRESS, sizeof(shm_type), 0777);
 			Printf("ATTACHED to memory segment. [adress %d][ID %d]", MEMORY_ADDRESS, MEMORY_ID);
 			MEMORY_POINTER = (shm_type *)Shmat(MEMORY_ID, NULL, 0);
 
-			SEMAPHORES_ID = Semget(MEMORY_POINTER->semaphores_key, 3, 0600);
+			SEMAPHORES_ID = Semget(MEMORY_POINTER->semaphores_key, 3, 0777);
 			Printf("ATTACHED to semaphores. [ID %d]", SEMAPHORES_ID)	
 		}
   	}
@@ -271,7 +271,7 @@ void AttachToIPCUtils(int argc, char *args[]) {
 		int number = 256;
 		do {
 			MEMORY_ADDRESS = number++;
-			MEMORY_ID = Shmget(MEMORY_ADDRESS, sizeof(shm_type), 0600 | IPC_CREAT | IPC_EXCL);
+			MEMORY_ID = Shmget(MEMORY_ADDRESS, sizeof(shm_type), 0777 | IPC_CREAT | IPC_EXCL);
 		} while(MEMORY_ID == -1);
 	}
 
@@ -294,7 +294,7 @@ void AttachToIPCUtils(int argc, char *args[]) {
 		
 		do {
 			MEMORY_POINTER->semaphores_key = Random();
-			SEMAPHORES_ID = Semget(MEMORY_POINTER->semaphores_key, 3, 0600 | IPC_CREAT);
+			SEMAPHORES_ID = Semget(MEMORY_POINTER->semaphores_key, 3, 0777 | IPC_CREAT);
 		} while (SEMAPHORES_ID == -1);
 		
 		Printf("CREATED semaphores. [key %d][ID %d]", MEMORY_POINTER->semaphores_key, SEMAPHORES_ID);
@@ -313,7 +313,7 @@ void AttachToIPCUtils(int argc, char *args[]) {
 		int number = 256;
 		do {
 			SERVER_QUEUE_KEY = number++;
-			SERVER_QUEUE_ID = Msgget(SERVER_QUEUE_KEY, 0600 | IPC_CREAT | IPC_EXCL);
+			SERVER_QUEUE_ID = Msgget(SERVER_QUEUE_KEY, 0777 | IPC_CREAT | IPC_EXCL);
 		} while (SERVER_QUEUE_ID == -1);
 		MEMORY_POINTER->servers[SERVER_NUMBER].queue_key = SERVER_QUEUE_KEY;
 		printf("CLIENT %d\n", MEMORY_POINTER->servers[SERVER_NUMBER].queue_key);
@@ -351,7 +351,8 @@ void RegisterUser() {
 
 	int alreadyExists = 0;
 	int j = MAX_CLIENTS;
-	int clientQueueKey= compactMessage.content.value;
+	int clientsOnServer = 0;
+	int clientQueueKey = compactMessage.content.value;
 	
 	P(CLIENT);
 		for (int i = 0; i < MAX_CLIENTS; ++i) {
@@ -360,10 +361,12 @@ void RegisterUser() {
 			} else if (!strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
 				alreadyExists = 1;
 				break;
+			} else if (MEMORY_POINTER->clients[i].server_queue_key == SERVER_QUEUE_KEY) {
+				clientsOnServer++;
 			}
 		}
 
-		if (alreadyExists == 0) {
+		if (alreadyExists == 0 && clientsOnServer < MAX_USER_COUNT_PER_SERVER) {
 			MEMORY_POINTER->clients[j].server_queue_key = SERVER_QUEUE_KEY;
 			MEMORY_POINTER->clients[j].queue_key = clientQueueKey;
 			strcpy(MEMORY_POINTER->clients[j].name, compactMessage.content.sender);
@@ -371,7 +374,7 @@ void RegisterUser() {
 		}
 	V(CLIENT);
 
-	SndCompactMessage(compactMessage.content.value, MSG_REGISTER, (alreadyExists) ? -1 : 0, compactMessage.content.id);
+	SndCompactMessage(compactMessage.content.value, MSG_REGISTER, (alreadyExists) ? -1 : ((clientsOnServer < MAX_USER_COUNT_PER_SERVER) ? 0 : -2), compactMessage.content.id);
 	Printf2("Register user %s %s", compactMessage.content.sender, (alreadyExists) ? "failed" : "succeed");
 }
 

@@ -63,12 +63,16 @@ ssize_t RcvStandardMessage(type_t type) {
 ssize_t RcvHeartBeat() {
  	CLEAR(compactMessage);
 
-	ssize_t x = msgrcv(CLIENT_QUEUE_ID, &compactMessage, sizeof(compactMessage), MSG_HEARTBEAT, 0);
+	ssize_t x = msgrcv(CLIENT_QUEUE_ID, &compactMessage, sizeof(compactMessage) + 2, MSG_HEARTBEAT, IPC_NOWAIT);
 	if (x < 0) {
-		return -1;
-	} else {
-		return x;
+		int errno;
+		if (errno == ENOMSG) return 0;
+		if (errno == EINVAL) return -1; 
+		if (errno == EIDRM) return -1; 
+
+		Error("HeartBeat!");
 	}
+	return x;
 }
  
 ssize_t SndHeartBeat(int id) {
