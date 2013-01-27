@@ -19,22 +19,24 @@ int main(int argc, char *argv[]) {
 
 	int pid = Fork();
   	if (pid) {
-  		// PrintfStatusBar();
-  		srand(time(0));
-		char txt[256];
+		/**
+		 * GUI process.
+         */
+		char txt[512]; // for reading user messages
+		
 		while(1) {
 			CLEAR(txt);
-    		getnstr(txt, 256); 
+    		getnstr(txt, 512); 
     		if (IsStringEmptyAndTrim(txt)) {
     			continue;
     		}
-    		if (txt[0] == '/') {
+    		if (txt[0] == '/') { 
 				if (!strncmp(txt, "/quit", 5)) {
 					SndCompactMessage(MSG_UNREGISTER, 0);
 					kill(pid, SIGTERM);
 					break;
-				} else if (!strncmp(txt, "/list", 5)) {
-					SndCompactMessage(MSG_LIST, 0);
+//				} else if (!strncmp(txt, "/list", 5)) {
+//					SndCompactMessage(MSG_LIST, 0);
 				} else if (!strncmp(txt, "/pm", 3)) {
 					// SndCompactMessage(MSG_LIST, 0);
 				} else if (!strncmp(txt, "/join", 5)) {
@@ -59,30 +61,28 @@ int main(int argc, char *argv[]) {
 		}   
 
   	} else {
-		// execlp("ls", "ls", NULL);
-			// PrintfMessage(GetCurrentTime(), NICK, "asdf", MESSAGE_SEND);
   		while (1) {
-  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
-				
-				char userList[MAXX] = {0};
-				for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
-					if (strlen(roomListMessage.content.list[i])) {
-						strcpy(userList + strlen(userList), " <");
-						strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
-						strcpy(userList + strlen(userList), ">");
-					} else {
-						break;
-					}
-				}
-				
-				char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
-				strcpy(help, "Users in room ");
-				strcpy(help + strlen(help), room);
-				strcpy(help + strlen(help), ": ");
-				
-				PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
-				PrintfMessage("", "", userList, INFO);
-  			}
+			
+//  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
+//				char userList[MAX_CLIENTS] = {0};
+//				for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
+//					if (strlen(roomListMessage.content.list[i])) {
+//						strcpy(userList + strlen(userList), " <");
+//						strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
+//						strcpy(userList + strlen(userList), ">");
+//					} else {
+//						break;
+//					}
+//				}
+//				
+//				char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
+//				strcpy(help, "Users in room ");
+//				strcpy(help + strlen(help), room);
+//				strcpy(help + strlen(help), ": ");
+//				
+//				PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
+//				PrintfMessage("", "", userList, INFO);
+//  			}
 
   			if (RcvStandardMessage(MSG_ROOM) > 0) {
   				PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
@@ -137,9 +137,13 @@ void Initialize() {
 	// signal(SIGINT, SIG_IGN);
 	// signal(3, SIG_IGN);
 	// signal(20, SIG_IGN);
-
-	CLIENT_QUEUE_ID = Msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
-	while (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage), 0, IPC_NOWAIT) != -1);
+	
+	srand(time(0));
+	
+	do {
+		CLIENT_QUEUE_KEY = Random();
+		CLIENT_QUEUE_ID = Msgget(CLIENT_QUEUE_KEY, 0600 | IPC_CREAT | IPC_EXCL);
+	} while (CLIENT_QUEUE_ID == -1);
 }
 
 /**
@@ -150,21 +154,31 @@ void ReadServerAdress(int argc, char *argv[]) {
 	/**
 	 * Read server adress or copy it from arguments if exists.
 	 */	
-  	char serverAdress[10] = {0};
+  	char serverQueueKey[10] = {0};
   	if (argc < 2) {
-		PrintfMessage(GetCurrentTime(), "CONFIG", "Type server queue id...", CONFIG);
-  		getstr(serverAdress);  		
+		PrintfMessage(GetCurrentTime(), "CONFIG", "Type server queue identifier...", CONFIG);
+  		getstr(serverQueueKey);  		
   	} else {
-  		strcpy(serverAdress, argv[1]);
+  		strcpy(serverQueueKey, argv[1]);
   	}
 
 	/**
 	 * Convert hexadecimal server adress into binary.
 	 */
-  	SERVER_QUEUE_ID = (int)strtol(serverAdress, NULL, 10);
-	SERVER_QUEUE_ID = Msgget(SERVER_QUEUE_ID, 0600 | IPC_CREAT);
+	while (1) {
+		SERVER_QUEUE_ID = Msgget((int)strtol(serverQueueKey, NULL, 10), 0600 | IPC_CREAT | IPC_EXCL);
+		
+		if (SERVER_QUEUE_ID != -1) {
+			PrintfMessage(GetCurrentTime(), "ERROR", "Queue with typed key does not exists!.", ERROR);
+			PrintfMessage(GetCurrentTime(), "CONFIG", "Type server queue identifier...", CONFIG);
+			getstr(serverQueueKey); 
+		} else {
+			SERVER_QUEUE_ID = Msgget((int)strtol(serverQueueKey, NULL, 10), 0600);
+			break;
+		}
+	} 
 
-	PrintfMessage(GetCurrentTime(), "INFO", "Server address saved.", INFO);
+	PrintfMessage(GetCurrentTime(), "INFO", "Server indentifier saved.", INFO);
 }
 
 void ReadNickNameAndJoinServer() {
@@ -175,12 +189,13 @@ void ReadNickNameAndJoinServer() {
 
 		PrintfMessage(GetCurrentTime(), "INFO", "Connecting to server... Checking nickname...", INFO);
 		
-		SndCompactMessage(MSG_REGISTER, CLIENT_QUEUE_ID);
+		SndCompactMessage(MSG_REGISTER, CLIENT_QUEUE_KEY);
 		Msgrcv(CLIENT_QUEUE_ID, &compactMessage, sizeof(compactMessage) + 1, 0, 0);
 
 		if (compactMessage.content.value == 0) {
 			connectionStatus = true;
 			PrintfMessage(GetCurrentTime(), "INFO", "Connection established. Nickname saved.", INFO);
+			PrintfMessage(GetCurrentTime(), "INFO", "If you need help, type /help.", INFO);
 		} else {
 			PrintfMessage(GetCurrentTime(), "ERROR", "Nickname already used.", ERROR);
 		}

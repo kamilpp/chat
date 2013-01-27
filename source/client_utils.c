@@ -23,7 +23,7 @@ int SndStandardMessage(type_t type, char message[512], char recipient[MAX_USER_N
 	strcpy(standardMessage.content.recipient, recipient);
 	strcpy(standardMessage.content.message, message);
 
-	Msgsnd(SERVER_QUEUE_ID, &standardMessage, sizeof(standardMessage), 0);
+	Msgsnd(SERVER_QUEUE_ID, &standardMessage, sizeof(standard_message), 0);
 	return id;
 }
 
@@ -38,20 +38,20 @@ int SndCompactMessage(type_t type, int value) {
 	compactMessage.content.id = id;
 
 	// printf("Sending to %d\n", SERVER_QUEUE_ID);
-	Msgsnd(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), 0);
+	Msgsnd(SERVER_QUEUE_ID, &compactMessage, sizeof(compact_message), 0);
 	return id;
 }
 
 ssize_t RcvCompactMessage(type_t type) {
 	
 	CLEAR(compactMessage);
-	return Msgrcv(CLIENT_QUEUE_ID, &compactMessage, sizeof(compactMessage), type, IPC_NOWAIT);
+	return Msgrcv(CLIENT_QUEUE_ID, &compactMessage, sizeof(compact_message), type, IPC_NOWAIT);
 }
 
 ssize_t RcvStandardMessage(type_t type) {
 	
 	CLEAR(standardMessage);
-	return Msgrcv(CLIENT_QUEUE_ID, &standardMessage, sizeof(standardMessage), type, IPC_NOWAIT);
+	return Msgrcv(CLIENT_QUEUE_ID, &standardMessage, sizeof(standard_message), type, IPC_NOWAIT);
 }
 
 // int SndCompact(type_t type) {

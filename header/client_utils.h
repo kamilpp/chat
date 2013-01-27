@@ -6,6 +6,7 @@
 
 extern int SERVER_QUEUE_ID;
 extern int CLIENT_QUEUE_ID;
+//extern int CLIENT_QUEUE_KEY;
 
 extern char NICK[16]; 
 

@@ -30,3 +30,7 @@ void Error(char message[]) {
 	perror(message);
 	exit(-1);
 }
+
+int Random() {
+	return rand() % 1000 + 1;
+}

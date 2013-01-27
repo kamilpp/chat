@@ -22,6 +22,8 @@ int Snd(int, void*, int);
 ssize_t Rcv(void*, int, long);
 void V(int);
 void P(int);
+int GetMessageID();
+
 
 #define Printf(...) \
 		if (DEBUG) { \

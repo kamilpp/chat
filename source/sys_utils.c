@@ -120,6 +120,9 @@ int Fork() {
 int Msgget(key_t key, int msgflg) {
 	int x = msgget(key, msgflg);
 	if (x < 0) {
+		int err = errno;
+		if (err == EEXIST) return -1;
+		if (err == ENOENT) return -1;
 		// int err = errno;
 		// if (err == ENOENT) Error("Program error (msgget)"); // nie istnieje
 		// if (err == EIDRM)  Error("Program error (msgget)"); // przeznaczona do usuniecia
@@ -196,6 +199,8 @@ int Shmctl(int shmid, int cmd, struct shmid_ds *buf) {
 int Semget(key_t key, int nsems, int semflg) {
 	int x = semget(key, nsems, semflg);
 	if (x < 0) {
+		int err = errno;
+		if (err == EEXIST) return -1;
 		Error("Error on semget");
 	}
 	return x;

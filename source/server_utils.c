@@ -15,8 +15,12 @@ char *GetMessageType(int type);
 //////////////////////////////////////////////////////////////////////////
 int SndCompactMessage(int dest, type_t type, int value, int id) {
 	
-	Printf("Sending compact message to %d of type %ld\n", dest, type);
+	Printf2("Sending compact message to %d of type %ld", dest, type);
 	
+	dest = Msgget(dest, 0);
+	if (dest == -1) {
+		return -1;
+	}
 	CLEAR(compactMessage);
 	compactMessage.type = type;
 	compactMessage.content.value = value;
@@ -31,7 +35,7 @@ ssize_t RcvCompactMessage(type_t type) {
 	CLEAR(compactMessage);
 	ssize_t x = Msgrcv(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), type, IPC_NOWAIT);
 	if (x > 0) {
-		Printf("Recieved compact message of type %s", GetMessageType(type));	
+		Printf("Recieved compact message of type %s [%s]", GetMessageType(type), compactMessage.content.sender);	
 	} 
 	return x;
 }
@@ -41,16 +45,21 @@ ssize_t RcvStandardMessage(type_t type) {
 	CLEAR(standardMessage);
 	int x = Msgrcv(SERVER_QUEUE_ID, &standardMessage, sizeof(standardMessage), type, IPC_NOWAIT);
 	if (x > 0) {
-		Printf("Recieved standard message of type %s", GetMessageType(type));	
+		Printf("Recieved standard message of type %s [%s]", GetMessageType(type), standardMessage.content.sender);	
 	} 
 	return x;
 }
 
 
-int Snd(int destination, void *structure, int size) {
+int Snd(int dest, void *structure, int size) {
 	
-	Printf("Sending special message to %d\n", destination);
-	return Msgsnd(destination, structure, size, 0);
+	dest = Msgget(dest, 0);
+	if (dest == -1) {
+		return -1;
+	}
+	
+	Printf2("Sending special message to %d", dest);
+	return Msgsnd(dest, structure, size, 0);
 }
 
 ssize_t Rcv(void *structure, int size, long type) {
@@ -65,14 +74,14 @@ ssize_t Rcv(void *structure, int size, long type) {
 }
 
 void V(int semnum) {
-	Printf("Semaphore %d up	", semnum);
+//	Printf("Semaphore %d up	", semnum);
 	v(SEMAPHORES_ID, semnum);
 }
 
 void P(int semnum) {
-	Printf("Waiting for semaphore %d", semnum);
+	Printf2("Waiting for semaphore %d", semnum);
 	p(SEMAPHORES_ID, semnum);
-	Printf("Semaphore %d down", semnum);
+//	Printf("Semaphore %d down", semnum);
 }
 //////////////////////////////////////// LOCAL
 

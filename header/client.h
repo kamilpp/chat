@@ -6,6 +6,7 @@
 #include "client_ui.h"
 
 int SERVER_QUEUE_ID;
+int CLIENT_QUEUE_KEY;
 int CLIENT_QUEUE_ID;
 char NICK[16];
 
