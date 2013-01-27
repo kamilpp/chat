@@ -4,6 +4,7 @@ void AttachToIPCUtils(int argc, char *args[]);
 void DettachToIPCUtils();
 void RegisterUser();
 void UnregisterUser(char[]);
+void WriteToLogFile(char []);
 
 int main(int argc, char *argv[]) {
 
@@ -117,42 +118,44 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				
-//				if (RcvCompactMessage(MSG_LIST) > 0) {
-//					if (!Fork()) {
-//						Printf2("Sending user list");
-//						
-//						int i, j = 0;
-//						char roomName[MAX_ROOM_NAME_LENGTH] = {0};
-//						int clientQueueKey;
-//						CLEAR(roomListMessage);
-//						
-//						P(CLIENT);
-//							for (i = 0; i < MAX_CLIENTS; ++i) {
-//								if (MEMORY_POINTER->clients[i].queue_key != -1 && !strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
-//									strcpy(roomName, MEMORY_POINTER->clients[i].room);
-//									clientQueueKey = MEMORY_POINTER->clients[i].queue_key;									
-//									break;
-//								}
-//							}
-//						
-//							if (i == MAX_CLIENTS) {
-//								Printf2("Error in function handling MSG_LIST request - client not found.");
-//								return 0;
-//							}
-//						
-//							for (int i = 0; i < MAX_CLIENTS; ++i) {
-//								if (MEMORY_POINTER->clients[i].queue_key != -1 && !strcmp(MEMORY_POINTER->clients[i].room, roomName)) {
-//									strcpy(roomListMessage.content.list[j++], MEMORY_POINTER->clients[i].name); 
-//								}
-//							}
-//						V(CLIENT);
-//						
-//						roomListMessage.content.id = compactMessage.content.id;
-//						roomListMessage.type = MSG_LIST;
-//						Snd(clientQueueKey, &roomListMessage, sizeof(roomListMessage));
-//						return 0;
-//					}
-//				}
+				if (RcvCompactMessage(MSG_LIST) > 0) {
+					if (!Fork()) {
+						Printf2("Sending user list");
+						
+						int i, j = 0;
+						char roomName[MAX_ROOM_NAME_LENGTH] = {0};
+						int clientQueueKey;
+						CLEAR(roomListMessage);
+						
+						P(CLIENT);
+							for (i = 0; i < MAX_CLIENTS; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_key != -1 && 
+								!strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
+									strcpy(roomName, MEMORY_POINTER->clients[i].room);
+									clientQueueKey = MEMORY_POINTER->clients[i].queue_key;									
+									break;
+								}
+							}
+						
+							if (i == MAX_CLIENTS) {
+								Printf2("Error in function handling MSG_LIST request - client not found.");
+								return 0;
+							}
+						
+							for (int i = 0; i < MAX_CLIENTS; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_key != -1 && 
+								!strcmp(MEMORY_POINTER->clients[i].room, roomName)) {
+									strcpy(roomListMessage.content.list[j++], MEMORY_POINTER->clients[i].name); 
+								}
+							}
+						V(CLIENT);
+						
+						roomListMessage.content.id = compactMessage.content.id;
+						roomListMessage.type = MSG_LIST;
+						Snd(clientQueueKey, &roomListMessage, sizeof(roomListMessage));
+						return 0;
+					}
+				}
 				
 				if (RcvStandardMessage(MSG_JOIN) > 0) {
 					if (!fork()) {
@@ -260,7 +263,7 @@ void AttachToIPCUtils(int argc, char *args[]) {
 			Printf("ATTACHED to memory segment. [adress %d][ID %d]", MEMORY_ADDRESS, MEMORY_ID);
 			MEMORY_POINTER = (shm_type *)Shmat(MEMORY_ID, NULL, 0);
 
-			SEMAPHORES_ID = Semget(MEMORY_POINTER->semaphores_key, 3, 0777);
+			SEMAPHORES_ID = Semget(MEMORY_POINTER->key_semaphores, 3, 0777);
 			Printf("ATTACHED to semaphores. [ID %d]", SEMAPHORES_ID)	
 		}
   	}
@@ -293,11 +296,11 @@ void AttachToIPCUtils(int argc, char *args[]) {
 		}
 		
 		do {
-			MEMORY_POINTER->semaphores_key = Random();
-			SEMAPHORES_ID = Semget(MEMORY_POINTER->semaphores_key, 3, 0777 | IPC_CREAT);
+			MEMORY_POINTER->key_semaphores = Random();
+			SEMAPHORES_ID = Semget(MEMORY_POINTER->key_semaphores, 3, 0777 | IPC_CREAT);
 		} while (SEMAPHORES_ID == -1);
 		
-		Printf("CREATED semaphores. [key %d][ID %d]", MEMORY_POINTER->semaphores_key, SEMAPHORES_ID);
+		Printf("CREATED semaphores. [key %d][ID %d]", MEMORY_POINTER->key_semaphores, SEMAPHORES_ID);
 		Semctl(SEMAPHORES_ID, 0, SETVAL, 1);
 		Semctl(SEMAPHORES_ID, 1, SETVAL, 1);
 		Semctl(SEMAPHORES_ID, 2, SETVAL, 1);
@@ -319,6 +322,7 @@ void AttachToIPCUtils(int argc, char *args[]) {
 		printf("CLIENT %d\n", MEMORY_POINTER->servers[SERVER_NUMBER].queue_key);
 		Printf("Created server message queue. [key %d][ID %d]", MEMORY_POINTER->servers[SERVER_NUMBER].queue_key, SERVER_QUEUE_ID);
 	V(SERVER);
+	WriteToLogFile("Registered server.");
 }
 
 void DettachToIPCUtils() {
@@ -335,6 +339,7 @@ void DettachToIPCUtils() {
 		}
 	V(SERVER);
 
+	WriteToLogFile("Unregistered server.");
 	shmdt(MEMORY_POINTER);
 	Msgctl(SERVER_QUEUE_ID, IPC_RMID, NULL);
 	if (isLast) {
@@ -371,11 +376,15 @@ void RegisterUser() {
 			MEMORY_POINTER->clients[j].queue_key = clientQueueKey;
 			strcpy(MEMORY_POINTER->clients[j].name, compactMessage.content.sender);
 			strcpy(MEMORY_POINTER->clients[j].room, GLOBAL_ROOM_NAME);
+			
+			char tmp[100] = {0}; 
+			sprintf(tmp, "Registered user %s.", compactMessage.content.sender);
+			WriteToLogFile(tmp);
 		}
 	V(CLIENT);
 
 	SndCompactMessage(compactMessage.content.value, MSG_REGISTER, (alreadyExists) ? -1 : ((clientsOnServer < MAX_USER_COUNT_PER_SERVER) ? 0 : -2), compactMessage.content.id);
-	Printf2("Register user %s %s", compactMessage.content.sender, (alreadyExists) ? "failed" : "succeed");
+	Printf2("Register user %s %s", compactMessage.content.sender, (!alreadyExists && clientsOnServer < MAX_USER_COUNT_PER_SERVER) ?  "succeed" : "failed");
 }
 
 void UnregisterUser(char user[]) {
@@ -396,6 +405,22 @@ void UnregisterUser(char user[]) {
 			memset(&(MEMORY_POINTER->clients[i]), 0, sizeof(client));
 			MEMORY_POINTER->clients[i].queue_key = -1;
 			Printf2("Unregistering succeed. User %s unregisterd.", user);
+			
+			char tmp[100] = {0}; 
+			sprintf(tmp, "Unregistered user %s.", user);
+			WriteToLogFile(tmp);
 		}
 	V(CLIENT);
+}
+
+void WriteToLogFile(char logMessage[]) {
+
+	char fullLogMessage[1000] = {0};
+	sprintf(fullLogMessage, "%s [%d] %s\n", GetCurrentTimeLogFormat(), SERVER_QUEUE_KEY, logMessage);
+
+	P(LOG);
+		FILE *log = fopen(LOGFILE, "a");
+		fwrite(fullLogMessage, 1, sizeof(fullLogMessage), log);
+		fclose(log);
+	V(LOG);
 }

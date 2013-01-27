@@ -3,12 +3,8 @@
 char* GetCurrentTime() {
 
 	static char TIME[6];
-	time_t rawtime;
-	struct tm* timeinfo;
-
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	strftime(TIME, 6, "%H:%M", timeinfo);
+	time_t rawtime = time(NULL);
+	strftime(TIME, 6, "%H:%M", localtime(&rawtime));
 
 	return TIME;
 }
@@ -17,12 +13,18 @@ char* GetTime(time_t *time) {
 
 	static char TIME[6];
 	time_t rawtime = *time;
-	struct tm* timeinfo;
-
-	timeinfo = localtime(&rawtime);
-	strftime(TIME, 6, "%H:%M", timeinfo);
+	strftime(TIME, 6, "%H:%M", localtime(&rawtime));
 
 	return TIME;	
+}
+
+char* GetCurrentTimeLogFormat() {
+	
+	static char TIME[30]; // to nie wystarczy 25?
+	time_t rawtime = time(NULL);
+	strftime(TIME, 30, "%Y-%m-%dT%H:%M:%S%z", localtime(&rawtime));
+
+	return TIME;
 }
 
 void Error(char message[]) {

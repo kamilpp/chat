@@ -15,7 +15,9 @@
 #define MALLOC(typ) (typ*)malloc(sizeof(typ))
 #define CLEAR(co) memset(&co, 0, sizeof(&co))
 char* GetCurrentTime();
+char* GetCurrentTimeLogFormat();
 char* GetTime(time_t *time);
+
 int Random();
 void Error(char[]);
 
@@ -31,11 +33,14 @@ void Error(char[]);
     #define MAX_USER_COUNT_PER_SERVER 20
     #define MAX_USER_NAME_LENGTH 16
     #define MAX_ROOM_NAME_LENGTH 16
+    #define MAX_USER_LIST_LENGTH 200
      
     #define SEMAPHORE_COUNT 3
     #define SERVER 0
     #define CLIENT 1
     #define LOG 2
+     
+    #define LOGFILE "/tmp/czat.log"
      
     #define GLOBAL_ROOM_NAME "global"
      
@@ -50,6 +55,7 @@ void Error(char[]);
             MSG_ROOM,
             MSG_PRIVATE,
             MSG_SERVER,
+            MSG_HEARTBEAT_SERVER,
             TERM = 0x7fffffffffffffff // dla ustalenia typu enuma
     } type_t;
      
@@ -77,7 +83,7 @@ void Error(char[]);
             type_t type;
             struct {
                     unsigned int id;              
-                    char list[MAX_USER_COUNT_PER_SERVER * MAX_SERVER_COUNT][MAX_USER_NAME_LENGTH];
+                    char list[MAX_USER_LIST_LENGTH][MAX_USER_NAME_LENGTH];
             } content;
     } user_list;
      
@@ -100,7 +106,7 @@ void Error(char[]);
     } server;
      
     typedef struct { // typ segmentu pamięci współdzielonej
-            int semaphores_key; // klucz zestawu semaforów
+            int key_semaphores; // klucz zestawu semaforów
             server servers[MAX_SERVER_COUNT]; // lista serwerów
             client clients[MAX_SERVER_COUNT * MAX_USER_COUNT_PER_SERVER]; // lista klientów
     } shm_type;
@@ -115,13 +121,11 @@ void Error(char[]);
 
 TODO:
  * 
- * GUI - kolory, poprawność
- * zabezpieczenie przed max liczbą sewerów?
  * plik logu
- * msg_LIST
- * q (error) 
+ * errory client
+ * odpowiadanie tylko na wiadomosci od zarejestrowanych clientów
+ * odpowiadanie tylko na wiadomosci od zarejestrowanych serwerół
  * 
  * 
- * QUESTIONS:
- *  co jeśli zamkniemy serwer
+ * GUI - kolory, poprawność
 */

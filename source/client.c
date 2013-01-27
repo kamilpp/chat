@@ -50,8 +50,8 @@ int main(int argc, char *argv[]) {
 					SndCompactMessage(MSG_UNREGISTER, 0);
 					kill(pid, SIGTERM);
 					break;
-//				} else if (!strncmp(txt, "/list", 5)) {
-//					SndCompactMessage(MSG_LIST, 0);
+				} else if (!strncmp(txt, "/list", 5)) {
+					SndCompactMessage(MSG_LIST, 0);
 				} else if (!strncmp(txt, "/pm", 3)) {
 					char recipient[MAX_USER_NAME_LENGTH] = {0};
 					
@@ -99,26 +99,26 @@ int main(int argc, char *argv[]) {
 		if (fork()) {
 			while (1) {
 
-//	  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
-//					char userList[MAX_CLIENTS] = {0};
-//					for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
-//						if (strlen(roomListMessage.content.list[i])) {
-//							strcpy(userList + strlen(userList), " <");
-//							strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
-//							strcpy(userList + strlen(userList), ">");
-//						} else {
-//							break;
-//						}
-//					}
-//					
-//					char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
-//					strcpy(help, "Users in room ");
+	  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage), MSG_LIST, IPC_NOWAIT) > 0) {
+					char userList[MAX_CLIENTS] = {0};
+					for (int i = 0; i < MAX_USER_LIST_LENGTH; ++i) {
+						if (strlen(roomListMessage.content.list[i])) {
+							strcpy(userList + strlen(userList), " <");
+							strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
+							strcpy(userList + strlen(userList), ">");
+						} else {
+							break;
+						}
+					}
+					
+					char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
+					strcpy(help, "Users in room: ");
 //					strcpy(help + strlen(help), room);
 //					strcpy(help + strlen(help), ": ");
-//					
-//					PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
-//					PrintfMessage("", "", userList, INFO);
-//	  			}
+					
+					PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
+					PrintfMessage("", "", userList, INFO);
+	  			}
 
 				if (RcvStandardMessage(MSG_ROOM) > 0) {
 					PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
