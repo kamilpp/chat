@@ -3,6 +3,7 @@
 void AttachToIPCUtils(int argc, char *args[]);
 void DettachToIPCUtils();
 void RegisterUser();
+void UnregisterUser(char[]);
 
 int main(int argc, char *argv[]) {
 
@@ -19,13 +20,15 @@ int main(int argc, char *argv[]) {
 		/**
 		 * GUI process.
          */
-		char symbol;
 		printf("Press q to terminate.\n");
+		
+		char symbol;
 		do {
 			scanf("%c", &symbol);
 		} while(symbol != 'q');
+		
 		Printf("Terminating...");
-		kill(pid, SIGTERM);
+		kill(pid, SIGTERM); // TODO if time1
 	} else {
 		if (Fork()) {
 			/**
@@ -40,24 +43,7 @@ int main(int argc, char *argv[]) {
 				}
 				if (RcvCompactMessage(MSG_UNREGISTER) > 0) {
 					if (!Fork()) {
-						Printf2("Unregistering user %s", compactMessage.content.sender);
-						int i;
-
-						P(CLIENT);
-							for (i = 0; i < MAX_CLIENTS; ++i) {
-								if (!strcmp(MEMORY_POINTER->clients[i].name, compactMessage.content.sender)) {
-									break;
-								}
-							}
-
-							if (i == MAX_CLIENTS) {
-								Printf2("Unregistering failed. User name - %s - not found.", compactMessage.content.sender);
-							} else {
-								memset(&(MEMORY_POINTER->clients[i]), 0, sizeof(client));
-								MEMORY_POINTER->clients[i].queue_key = -1;
-								Printf2("Unregistering succeed. User %s unregisterd.", compactMessage.content.sender);
-							}
-						V(CLIENT);
+						UnregisterUser(compactMessage.content.sender);
 						return 0;
 					}
 				}
@@ -78,12 +64,30 @@ int main(int argc, char *argv[]) {
 					}
 				}
 				
+				if (RcvStandardMessage(MSG_PRIVATE) > 0) {
+					if (!Fork()) {
+						CLEAR(serverMessage);
+						serverMessage.type = MSG_SERVER;
+						serverMessage.content.msg = standardMessage;
+						P(CLIENT);
+							for (int i = 0; i < MAX_CLIENTS; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_key != -1 &&
+								!strcmp(MEMORY_POINTER->clients[i].name, standardMessage.content.sender)) {
+									Snd(MEMORY_POINTER->clients[i].server_queue_key, &serverMessage, sizeof(server_message));	
+									break;
+								}
+							}		
+						V(CLIENT);
+						return 0;
+					}
+				}
+				
 				if (Rcv(&serverMessage, sizeof(server_message), MSG_SERVER) > 0) {
 					if (!Fork()) {
 						
 						P(CLIENT);
-							Printf2("Recieved message to room %s", serverMessage.content.msg.content.recipient);
 							if (serverMessage.content.msg.type == MSG_ROOM) {
+								Printf2("Recieved message to room %s", serverMessage.content.msg.content.recipient);
 								for (int i = 0; i < MAX_CLIENTS; ++i) {
 									if (MEMORY_POINTER->clients[i].queue_key != -1) {
 //										
@@ -96,7 +100,17 @@ int main(int argc, char *argv[]) {
 									}
 								}
 							} else if (serverMessage.content.msg.type == MSG_PRIVATE) {
-
+								Printf2("Recieved private message to user %s", serverMessage.content.msg.content.recipient);
+								for (int i = 0; i < MAX_CLIENTS; ++i) {
+									if (MEMORY_POINTER->clients[i].queue_key != -1) {
+//										
+										Printf2("Comparing %d %d and %s != %s", MEMORY_POINTER->clients[i].server_queue_key, SERVER_QUEUE_ID, serverMessage.content.msg.content.sender, MEMORY_POINTER->clients[i].name)
+										if (MEMORY_POINTER->clients[i].server_queue_key == SERVER_QUEUE_KEY &&  
+										!strcmp(serverMessage.content.msg.content.recipient, MEMORY_POINTER->clients[i].name)) {
+											Snd(MEMORY_POINTER->clients[i].queue_key, &(serverMessage.content.msg), sizeof(standardMessage));
+										}
+									}
+								}
 							}
 						V(CLIENT);
 						return 0;
@@ -140,29 +154,31 @@ int main(int argc, char *argv[]) {
 //					}
 //				}
 				
-//				if (RcvStandardMessage(MSG_JOIN) > 0) {
-//					if (!fork()) {
-//						
-//						int clientQueueID = -1;
-//						P(CLIENT);
-//							Printf2("User %s joining room %s", standardMessage.content.sender, standardMessage.content.message);
-//							for (int i = 0; i < MAX_CLIENTS; ++i) {
-//								if (MEMORY_POINTER->clients[i].queue_id != -1 && !strcmp(MEMORY_POINTER->clients[i].name, standardMessage.content.sender)) {
-//									strcpy(MEMORY_POINTER->clients[i].room, standardMessage.content.message);
-//									clientQueueID = MEMORY_POINTER->clients[i].queue_id;
-//									break;
-//								}
-//							}
-//						V(CLIENT);
-//						if (clientQueueID != -1) {
+				if (RcvStandardMessage(MSG_JOIN) > 0) {
+					if (!fork()) {
+						
+						int clientQueueKey = -1;
+						P(CLIENT);
+							Printf2("User %s joining room %s", standardMessage.content.sender, standardMessage.content.message);
+							for (int i = 0; i < MAX_CLIENTS; ++i) {
+								if (MEMORY_POINTER->clients[i].queue_key != -1 && !strcmp(MEMORY_POINTER->clients[i].name, standardMessage.content.sender)) {
+									strcpy(MEMORY_POINTER->clients[i].room, standardMessage.content.message);
+									clientQueueKey = MEMORY_POINTER->clients[i].queue_key;
+									break;
+								}
+							}
+						V(CLIENT);
+						
+						if (clientQueueKey != -1) {
 //							printf("%d\n", standardMessage.content.id);
-//							SndCompactMessage(clientQueueID, MSG_JOIN, 0, standardMessage.content.id);
-//						} else {
+							SndCompactMessage(clientQueueKey, MSG_JOIN, 0, standardMessage.content.id);
+						} else {
+							Printf2("Error in MSG_JOIN - user doesn't exits!");
 //							Error("Error while handling MSG_JOIN.");
-//						}
-//						return 0;
-//					}
-//				}
+						}
+						return 0;
+					}
+				}
 			}
 		} else {
 			/**
@@ -170,42 +186,57 @@ int main(int argc, char *argv[]) {
 			*/
 			int j;
 			int id[MAX_USER_COUNT_PER_SERVER];
-			int key[MAX_USER_COUNT_PER_SERVER];
+			char username[MAX_USER_COUNT_PER_SERVER][MAX_USER_NAME_LENGTH];
 			
 			while (1) {
-//				CLEAR(id);
-//				j = 0;
-//				
-//				P(CLIENT);
-//				for (int i = 0; i < MAX_CLIENTS; ++i) {
-//					if (MEMORY_POINTER->clients[i].queue_key != -1 &&
-//					MEMORY_POINTER->clients[i].server_queue_key == SERVER_QUEUE_KEY) {
-//						id[j] = GetMessageId();
-//						SndCompactMessage(MEMORY_POINTER->clients[i].queue_key, MSG_HEARTBEAT, 0, id[j]);
-//						j++;
-//					}
-//				}
-//				V(CLIENT);
-//				
-//				sleep(2);
-//				j = 0;
-//				while (RcvCompactMessage(MSG_HEARTBEAT) > 0) {
-//					for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
-//						if (id[i] == compactMessage.content.id) {
-//							j = 1;
-//						} 
-//					}
-//					if (j == 0) {
-//						continue;
-//					}
-//				} 
-			}
-		}
-	}
+				memset(id, -1, sizeof(id));
+				CLEAR(username);
+				j = 0;
+				
+				P(CLIENT);
+				for (int i = 0; i < MAX_CLIENTS; ++i) {
+					if (MEMORY_POINTER->clients[i].queue_key != -1 &&
+					MEMORY_POINTER->clients[i].server_queue_key == SERVER_QUEUE_KEY) {
+						id[j] = GetMessageID();
+						strcpy(username[j], MEMORY_POINTER->clients[i].name);
+						SndCompactMessage(MEMORY_POINTER->clients[i].queue_key, MSG_HEARTBEAT, 0, id[j]);
+						j++;
+					}
+				}
+				V(CLIENT);
+				
+				sleep(2);
+				
+				
+				while ((j = RcvHeartBeat()) > 0) {
+					for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
+						if (id[i] == compactMessage.content.id) {
+							id[i] = -1;
+							break;
+						} 
+					}
+				} 
+				
+				if (j < 0) {
+					return 0; // Error - process terminated.
+				}
+				
+				for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
+					if (id[i] != -1) {
+						if (!fork()) {
+							Printf("Heartbeat detected inactive (unregistred) user - %s", username[i]);
+							UnregisterUser(username[i]);
+							return 0;
+						}
+					}
+				} 
+			} /* while 1 */
+		} /* Heartbeat process */
+	} /* Main process */
 
 	DettachToIPCUtils();
 	return 0;
-}
+} /* MAIN */
 
 void AttachToIPCUtils(int argc, char *args[]) {
 
@@ -342,4 +373,26 @@ void RegisterUser() {
 
 	SndCompactMessage(compactMessage.content.value, MSG_REGISTER, (alreadyExists) ? -1 : 0, compactMessage.content.id);
 	Printf2("Register user %s %s", compactMessage.content.sender, (alreadyExists) ? "failed" : "succeed");
+}
+
+void UnregisterUser(char user[]) {
+	
+	Printf2("Unregistering user %s", user);
+	int i;
+
+	P(CLIENT);
+		for (i = 0; i < MAX_CLIENTS; ++i) {
+			if (!strcmp(MEMORY_POINTER->clients[i].name, user)) {
+				break;
+			}
+		}
+
+		if (i == MAX_CLIENTS) {
+			Printf2("Unregistering failed. User name - %s - not found.", user);
+		} else {
+			memset(&(MEMORY_POINTER->clients[i]), 0, sizeof(client));
+			MEMORY_POINTER->clients[i].queue_key = -1;
+			Printf2("Unregistering succeed. User %s unregisterd.", user);
+		}
+	V(CLIENT);
 }

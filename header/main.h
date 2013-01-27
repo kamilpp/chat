@@ -114,14 +114,13 @@ void Error(char[]);
 /* 
 
 TODO:
-- messageCounter 
-- rozpoznawanie /quit itp., niewysylanie samego entera i spacji
-- problem z wyswietlaniem 
-- powinno byc info o pierwszym wolnym i ostatnim zajetym polu
-Q:
-- czy mamy zabezpieczyć program przed np. max liczbą sewerów?
-- problem co z krzychem..
-- co jeśli zamkniemy serwer
-- enum zaczynac od 1
-- struktura klient numer kolejki powinna miec
+ * 
+ * GUI
+ * zabezpieczenie przed max liczbą sewerów?
+ * plik logu
+ * msg_LIST
+ * msg_private
+ *  
+ * QUESTIONS:
+ *  co jeśli zamkniemy serwer
 */

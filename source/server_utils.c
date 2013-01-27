@@ -40,6 +40,15 @@ ssize_t RcvCompactMessage(type_t type) {
 	return x;
 }
 
+ssize_t RcvHeartBeat() {
+	CLEAR(compactMessage);
+	ssize_t x = msgrcv(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), MSG_HEARTBEAT, IPC_NOWAIT);
+	if (x > 0) {
+		Printf("Recieved compact message of type %s [%s]", GetMessageType(MSG_HEARTBEAT), compactMessage.content.sender);	
+	} 
+	return x;
+}
+
 ssize_t RcvStandardMessage(type_t type) {
 	
 	CLEAR(standardMessage);
@@ -79,7 +88,7 @@ void V(int semnum) {
 }
 
 void P(int semnum) {
-	Printf2("Waiting for semaphore %d", semnum);
+//	Printf2("Waiting for semaphore %d", semnum);
 	p(SEMAPHORES_ID, semnum);
 //	Printf("Semaphore %d down", semnum);
 }

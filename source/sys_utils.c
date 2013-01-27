@@ -146,11 +146,13 @@ int Msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg) {
 ssize_t Msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg) {
 	ssize_t x = msgrcv(msqid, msgp, msgsz + 2, msgtyp, msgflg);
 	if (x < 0) {
+//		if (!msgflg) return -1; // when killed heartbeat process to avoid error on 
+				
 		int err = errno;
 		// if (err == EAGAIN) return x;
 		if (err == ENOMSG) return -1;
 		if (err == EINVAL) Error("Program error (msgrcv)"); // bledne parametry
-		if (err == EIDRM)  Error("Program error (msgrcv)"); // przeznaczona do usuniecia
+		if (err == EIDRM && msgflg)  Error("Program error (msgrcv)"); // przeznaczona do usuniecia
 		Error("Error on msgrcv");
 	}
 	return x;

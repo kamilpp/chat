@@ -10,6 +10,18 @@ void debug(char message[]) {
 	 PrintfMessage(GetCurrentTime(), "DEBUG", message, ERROR);
 }
 
+void signalJoinRoom() {
+//	printf("%d %d \n", compactMessage.content.id, roomRequestedMessageID);
+//	if (compactMessage.content.id == roomRequestedMessageID) { 
+	strcpy(room, roomRequested);
+	PrintfMessage(GetCurrentTime(), "INFO", "You have changed room.", INFO);
+//	}
+}
+
+void signalRedraw() {
+	
+}
+
 int main(int argc, char *argv[]) {
 
 	Initialize();
@@ -25,23 +37,44 @@ int main(int argc, char *argv[]) {
 		char txt[512]; // for reading user messages
 		
 		while(1) {
+			signal(SIGUSR1, signalJoinRoom); // c99 standard reset handlers after using...
+			signal(69, signalRedraw); 
 			CLEAR(txt);
     		getnstr(txt, 512); 
     		if (IsStringEmptyAndTrim(txt)) {
     			continue;
     		}
     		if (txt[0] == '/') { 
-				if (!strncmp(txt, "/quit", 5)) {
+				if (!strncmp(txt, "/quit", 5) ||
+					!strcmp(txt, "/q")) {
 					SndCompactMessage(MSG_UNREGISTER, 0);
 					kill(pid, SIGTERM);
 					break;
 //				} else if (!strncmp(txt, "/list", 5)) {
 //					SndCompactMessage(MSG_LIST, 0);
 				} else if (!strncmp(txt, "/pm", 3)) {
-					// SndCompactMessage(MSG_LIST, 0);
+					char recipient[MAX_USER_NAME_LENGTH] = {0};
+					
+					strcpy(txt, txt+4); // trim /pm
+					
+					strncpy(recipient, txt, strlen(txt) - strlen(strstr(txt, " ")));
+					strcpy(txt, strstr(txt, " "));
+					strcpy(txt, txt + 1);
+					if (IsStringEmptyAndTrim(txt) || IsStringEmptyAndTrim(recipient)) {
+						continue;
+					}
+					
+					PrintfMessage(GetCurrentTime(), "DEBUG", recipient, ERROR);
+					PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
+
+					PrintfMessage(GetCurrentTime(), recipient, txt, PRIVATE_MESSAGE_SEND);
+					SndStandardMessage(MSG_PRIVATE, txt, recipient);
 				} else if (!strncmp(txt, "/join", 5)) {
 					strcpy(txt, txt+6);
 					PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
+					if (IsStringEmptyAndTrim(txt)) {
+						continue;
+					}
 					strcpy(roomRequested, txt);
 					roomRequestedMessageID = SndStandardMessage(MSG_JOIN, txt, "");
 				} else if (!strncmp(txt, "/help", 5)) {
@@ -61,45 +94,56 @@ int main(int argc, char *argv[]) {
 		}   
 
   	} else {
-  		while (1) {
-			
-//  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
-//				char userList[MAX_CLIENTS] = {0};
-//				for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
-//					if (strlen(roomListMessage.content.list[i])) {
-//						strcpy(userList + strlen(userList), " <");
-//						strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
-//						strcpy(userList + strlen(userList), ">");
-//					} else {
-//						break;
-//					}
-//				}
-//				
-//				char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
-//				strcpy(help, "Users in room ");
-//				strcpy(help + strlen(help), room);
-//				strcpy(help + strlen(help), ": ");
-//				
-//				PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
-//				PrintfMessage("", "", userList, INFO);
-//  			}
+		int parentID = getppid();
+		
+		if (fork()) {
+			while (1) {
 
-  			if (RcvStandardMessage(MSG_ROOM) > 0) {
-  				PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
-  			}
-			
-			if (RcvCompactMessage(MSG_JOIN) > 0) {
-				printf("%d %d \n", compactMessage.content.id, roomRequestedMessageID);
-				if (compactMessage.content.id == roomRequestedMessageID) { 
-					strcpy(room, roomRequested);
-					PrintfMessage(GetCurrentTime(), "INFO", "You have changed room.", INFO);
+//	  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
+//					char userList[MAX_CLIENTS] = {0};
+//					for (int i = 0; i < MAX_SERVER_COUNT; ++i) {
+//						if (strlen(roomListMessage.content.list[i])) {
+//							strcpy(userList + strlen(userList), " <");
+//							strncpy(userList + strlen(userList), roomListMessage.content.list[i], strlen(roomListMessage.content.list[i]));
+//							strcpy(userList + strlen(userList), ">");
+//						} else {
+//							break;
+//						}
+//					}
+//					
+//					char help[100 + MAX_ROOM_NAME_LENGTH] = {0};
+//					strcpy(help, "Users in room ");
+//					strcpy(help + strlen(help), room);
+//					strcpy(help + strlen(help), ": ");
+//					
+//					PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
+//					PrintfMessage("", "", userList, INFO);
+//	  			}
+
+				if (RcvStandardMessage(MSG_ROOM) > 0) {
+					PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
+				}
+				
+				if (RcvStandardMessage(MSG_PRIVATE) > 0) {
+					PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, PRIVATE_MESSAGE_GET);
+				}
+				
+				if (RcvCompactMessage(MSG_JOIN) > 0) {
+					debug("Recivied message join");
+					kill(parentID, SIGUSR1);
+				}
+			} 
+  		} else {
+			/**
+			 * Heartbeat process.
+			 */
+			while (1) {
+				if (RcvHeartBeat() > 0) {
+					SndHeartBeat(compactMessage.content.id);
 				}
 			}
-//
-//  			if (RcvCompactMessage(MSG_JOIN) > 0) {
-//  				// if (compactMessage.content.status == )
-//  			}
-  		}
+		} /* Heartbeat process.*/
+		
 		return 0; 		
 		// while(1);  		
   	}

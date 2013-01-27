@@ -21,7 +21,9 @@ int GetMessageID();
 
 int SndStandardMessage(type_t, char[], char[]);
 int SndCompactMessage(type_t, int);
+ssize_t SndHeartBeat(int id);
 
+ssize_t RcvHeartBeat();
 ssize_t RcvCompactMessage(type_t);
 ssize_t RcvStandardMessage(type_t);
 

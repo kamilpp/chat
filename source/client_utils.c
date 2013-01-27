@@ -60,7 +60,24 @@ ssize_t RcvStandardMessage(type_t type) {
 // 	return sizeof(*structure);
 // }
 
-// ssize_t Rcv(void *structure, long type) {
-// 	CLEAR(structure);
-// 	return Msgrcv(CLIENT_QUEUE_ID, structure, sizeof(*structure) + 1, type, IPC_NOWAIT);
-// }
+ssize_t RcvHeartBeat() {
+ 	CLEAR(compactMessage);
+
+	ssize_t x = msgrcv(CLIENT_QUEUE_ID, &compactMessage, sizeof(compactMessage), MSG_HEARTBEAT, 0);
+	if (x < 0) {
+		return -1;
+	} else {
+		return x;
+	}
+}
+ 
+ssize_t SndHeartBeat(int id) {
+ 	CLEAR(compactMessage);
+	
+	compactMessage.type = MSG_HEARTBEAT;
+	compactMessage.content.value = 0;
+	strcpy(compactMessage.content.sender, NICK);
+	compactMessage.content.id = id;
+	
+ 	return Msgsnd(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), 0);
+ }

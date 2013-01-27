@@ -15,6 +15,7 @@ user_list roomListMessage;
 server_message serverMessage;
 
 int SndCompactMessage(int, type_t, int, int);
+ssize_t RcvHeartBeat();
 ssize_t RcvCompactMessage(type_t);
 ssize_t RcvStandardMessage(type_t);
 
