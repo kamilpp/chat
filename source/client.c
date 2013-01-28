@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
 			while (1) {
 				status = RcvHeartBeat();
 				if (status > 0) {
-					debug("Recieved hearbeat");
+//					debug("Recieved hearbeat");
 					SndHeartBeat(compactMessage.content.id);
 				}
 				

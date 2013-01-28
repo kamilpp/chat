@@ -5,6 +5,7 @@ void DettachToIPCUtils();
 void RegisterUser();
 void UnregisterUser(char[]);
 void WriteToLogFile(char []);
+int ValidateClient(char name[]);
 
 int main(int argc, char *argv[]) {
 
@@ -51,6 +52,9 @@ int main(int argc, char *argv[]) {
 				
 				if (RcvStandardMessage(MSG_ROOM) > 0) {
 					if (!Fork()) {
+						if (ValidateClient(standardMessage.content.sender)) {
+							return 0;
+						}
 						CLEAR(serverMessage);
 						serverMessage.type = MSG_SERVER;
 						serverMessage.content.msg = standardMessage;
@@ -67,13 +71,16 @@ int main(int argc, char *argv[]) {
 				
 				if (RcvStandardMessage(MSG_PRIVATE) > 0) {
 					if (!Fork()) {
+						if (ValidateClient(standardMessage.content.sender)) {
+							return 0;
+						}
 						CLEAR(serverMessage);
 						serverMessage.type = MSG_SERVER;
 						serverMessage.content.msg = standardMessage;
 						P(CLIENT);
 							for (int i = 0; i < MAX_CLIENTS; ++i) {
 								if (MEMORY_POINTER->clients[i].queue_key != -1 &&
-								!strcmp(MEMORY_POINTER->clients[i].name, standardMessage.content.sender)) {
+								!strcmp(MEMORY_POINTER->clients[i].name, standardMessage.content.recipient)) {
 									Snd(MEMORY_POINTER->clients[i].server_queue_key, &serverMessage, sizeof(server_message));	
 									break;
 								}
@@ -120,6 +127,9 @@ int main(int argc, char *argv[]) {
 				
 				if (RcvCompactMessage(MSG_LIST) > 0) {
 					if (!Fork()) {
+						if (ValidateClient(standardMessage.content.sender)) {
+							return 0;
+						}
 						Printf2("Sending user list");
 						
 						int i, j = 0;
@@ -158,8 +168,10 @@ int main(int argc, char *argv[]) {
 				}
 				
 				if (RcvStandardMessage(MSG_JOIN) > 0) {
-					if (!fork()) {
-						
+					if (!Fork()) {
+						if (ValidateClient(standardMessage.content.sender)) {
+							return 0;
+						}
 						int clientQueueKey = -1;
 						P(CLIENT);
 							Printf2("User %s joining room %s", standardMessage.content.sender, standardMessage.content.message);
@@ -226,7 +238,10 @@ int main(int argc, char *argv[]) {
 				
 				for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
 					if (id[i] != -1) {
-						if (!fork()) {
+						if (!Fork()) {
+							if (ValidateClient(username[i])) {
+								return 0;
+							}
 							Printf("Heartbeat detected inactive (unregistred) user - %s", username[i]);
 							UnregisterUser(username[i]);
 							return 0;
@@ -423,4 +438,17 @@ void WriteToLogFile(char logMessage[]) {
 		fwrite(fullLogMessage, 1, sizeof(fullLogMessage), log);
 		fclose(log);
 	V(LOG);
+}
+
+int ValidateClient(char name[]) {
+	P(CLIENT);
+		for (int i = 0; i < MAX_CLIENTS; ++i) {
+			if (MEMORY_POINTER->clients[i].queue_key != -1 &&
+			!strcmp(MEMORY_POINTER->clients[i].name, name)) { 
+				V(CLIENT);
+				return 0;
+			} 
+		}
+	V(CLIENT);
+	return 1;
 }

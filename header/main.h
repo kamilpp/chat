@@ -121,11 +121,9 @@ void Error(char[]);
 
 TODO:
  * 
- * plik logu
  * errory client
- * odpowiadanie tylko na wiadomosci od zarejestrowanych clientów
- * odpowiadanie tylko na wiadomosci od zarejestrowanych serwerół
- * 
+ * odpowiadanie tylko na wiadomosci od zarejestrowanych serwerów
+ * heartbeat server	 
  * 
  * GUI - kolory, poprawność
 */
