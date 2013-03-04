@@ -11,7 +11,11 @@ extern int SEMAPHORES_ID;
 
 standard_message standardMessage;
 compact_message compactMessage;
+<<<<<<< HEAD
 user_list roomListMessage;
+=======
+room_list roomListMessage;
+>>>>>>> master
 server_message serverMessage;
 
 int SndCompactMessage(int, type_t, int, int);
@@ -34,6 +38,7 @@ int GetMessageID();
 			fflush(stdout); \
 		}
 
+<<<<<<< HEAD
 #define Printf2(...) \
 		if (DEBUG) { \
 			printf("	"); \
@@ -45,4 +50,6 @@ int GetMessageID();
 			printf("	"); \
 			Printf2(__VA_ARGS__); \
 		}
+=======
+>>>>>>> master
 #endif

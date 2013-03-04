@@ -15,7 +15,11 @@ char *GetMessageType(int type);
 //////////////////////////////////////////////////////////////////////////
 int SndCompactMessage(int dest, type_t type, int value, int id) {
 	
+<<<<<<< HEAD
 	Printf2("Sending compact message to %d of type %ld", dest, type);
+=======
+	Printf("Sending compact message to %d of type %ld\n", dest, type);
+>>>>>>> master
 	
 	dest = Msgget(dest, 0);
 	if (dest == -1) {
@@ -73,8 +77,13 @@ int Snd(int dest, void *structure, int size) {
 		return -1;
 	}
 	
+<<<<<<< HEAD
 	Printf2("Sending special message to %d", dest);
 	return Msgsnd(dest, structure, size, 0);
+=======
+	Printf("Sending special message to %d\n", destination);
+	return Msgsnd(destination, structure, size, 0);
+>>>>>>> master
 }
 
 ssize_t Rcv(void *structure, int size, long type) {
@@ -89,14 +98,24 @@ ssize_t Rcv(void *structure, int size, long type) {
 }
 
 void V(int semnum) {
+<<<<<<< HEAD
 //	Printf("Semaphore %d up	", semnum);
+=======
+	Printf("Semaphore %d up	", semnum);
+>>>>>>> master
 	v(SEMAPHORES_ID, semnum);
 }
 
 void P(int semnum) {
+<<<<<<< HEAD
 //	Printf2("Waiting for semaphore %d", semnum);
 	p(SEMAPHORES_ID, semnum);
 //	Printf("Semaphore %d down", semnum);
+=======
+	Printf("Waiting for semaphore %d", semnum);
+	p(SEMAPHORES_ID, semnum);
+	Printf("Semaphore %d down", semnum);
+>>>>>>> master
 }
 //////////////////////////////////////// LOCAL
 

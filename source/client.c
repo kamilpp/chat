@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
 				} else if (!strncmp(txt, "/list", 5)) {
 					 // PrintfMessage(GetCurrentTime(), "DEBUG", NICK, ERROR);
 					SndCompactMessage(MSG_LIST, 0);
+<<<<<<< HEAD
 				} else if (!strncmp(txt, "/pm", 3)) {
 					char recipient[MAX_USER_NAME_LENGTH] = {0};
 					
@@ -101,6 +102,15 @@ int main(int argc, char *argv[]) {
 					PrintfMessage("", "", "/quit - to terminate chat.", INFO);
 				} else {
 					PrintfMessage(GetCurrentTime(), "INFO", "Command not found. Use /help to get some info.", INFO);
+=======
+				}		
+				if (!strncmp(txt, "/pm", 3)) {
+					// SndCompactMessage(MSG_LIST, 0);
+				}	
+
+				if (!strncmp(txt, "/join", 5)) {
+					// SndCompactMessage(MSG_LIST, 0);
+>>>>>>> master
 				}
     		} else {
     			SndStandardMessage(MSG_ROOM, txt, room);
@@ -110,6 +120,7 @@ int main(int argc, char *argv[]) {
 		}   
 
   	} else {
+<<<<<<< HEAD
 		int parentID = getppid();
 		
 		if (fork()) {
@@ -176,7 +187,21 @@ int main(int argc, char *argv[]) {
 		} /* Heartbeat process.*/
 		
 		return 0; 			
+=======
+		// execlp("ls", "ls", NULL);
+			// PrintfMessage(GetCurrentTime(), NICK, "asdf", MESSAGE_SEND);
+  		while (1) {
+  			if (Msgrcv(CLIENT_QUEUE_ID, &roomListMessage, sizeof(roomListMessage) + 1, MSG_LIST, IPC_NOWAIT) > 0) {
+				// char roomList  				
+  				// PrintfMessage(GetCurrentTime(), INFO, roomListMessage., MESSAGE_SEND);
+  			}
+  		}
+		return 0; 		
+		// while(1);  		
+>>>>>>> master
   	}
+
+	getch();
 
 	TerminateNcurses();
 	Msgctl(CLIENT_QUEUE_ID, IPC_RMID, NULL);
@@ -211,6 +236,7 @@ void Initialize() {
 	// signal(SIGINT, SIG_IGN);
 	// signal(3, SIG_IGN);
 	// signal(20, SIG_IGN);
+<<<<<<< HEAD
 	
 	srand(time(0));
 	
@@ -218,6 +244,11 @@ void Initialize() {
 		CLIENT_QUEUE_KEY = Random();
 		CLIENT_QUEUE_ID = Msgget(CLIENT_QUEUE_KEY, 0777 | IPC_CREAT | IPC_EXCL);
 	} while (CLIENT_QUEUE_ID == -1);
+=======
+
+	CLIENT_QUEUE_ID = Msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
+	// while (Rcv(&roomListMessage, 0) != -1);
+>>>>>>> master
 }
 
 /**

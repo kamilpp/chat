@@ -15,7 +15,11 @@ int SERVER_NUMBER;
 
 extern standard_message standardMessage;
 extern compact_message compactMessage;
+<<<<<<< HEAD
 extern user_list roomListMessage;
+=======
+extern room_list roomListMessage;
+>>>>>>> master
 extern server_message serverMessage;
 extern int messageCounter;
 

@@ -60,6 +60,7 @@ ssize_t RcvStandardMessage(type_t type) {
 // 	return sizeof(*structure);
 // }
 
+<<<<<<< HEAD
 ssize_t RcvHeartBeat() {
  	CLEAR(compactMessage);
 
@@ -85,3 +86,9 @@ ssize_t SndHeartBeat(int id) {
 	
  	return Msgsnd(SERVER_QUEUE_ID, &compactMessage, sizeof(compactMessage), 0);
  }
+=======
+// ssize_t Rcv(void *structure, long type) {
+// 	CLEAR(structure);
+// 	return Msgrcv(CLIENT_QUEUE_ID, structure, sizeof(*structure) + 1, type, IPC_NOWAIT);
+// }
+>>>>>>> master
