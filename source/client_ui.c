@@ -39,8 +39,8 @@ void InitializeNcurses() {
 	    init_pair(GREEN_BLUE, 	COLOR_GREEN,   	COLOR_BLUE);
 	    init_pair(RED_BLUE, 	COLOR_RED,   	COLOR_BLUE);
 
-	    int styles[][2] = {{COLOR_PAIR(MAGENTA) | A_BOLD, COLOR_PAIR(MAGENTA)}, 
-					{DEFAULT, COLOR_PAIR(MAGENTA)},
+	    int styles[][2] = {{COLOR_PAIR(GREEN) | A_BOLD, COLOR_PAIR(RED)}, 
+					{DEFAULT, COLOR_PAIR(RED)},
 					{DEFAULT | A_BOLD, DEFAULT},
 					{DEFAULT, DEFAULT},
 					{COLOR_PAIR(YELLOW) | A_BOLD, DEFAULT},

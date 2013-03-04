@@ -13,29 +13,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-
-// #include <sys/stat.h>
-// #include <unistd.h>
-// #include <fcntl.h>
-// #include <time.h>
-// #include <stdarg.h>
-// #include <signal.h>
-
-// #define MALLOC(typ, ilosc) (typ*)e_malloc((ilosc)*sizeof(typ))
-// void *e_malloc(size_t size);
-
-// ssize_t e_read(int fd, void * buffer, size_t count);
-// ssize_t e_write(int fd, const void * buffer, size_t count);
-// int e_open(const char *pathname, int flags, mode_t mode);
-// int e_creat(const char *pathname, mode_t mode);
-// int e_close(int fd);
-// int e_unlink(const char *pathname);
-// off_t e_lseek(int fd, off_t offset, int whence);
-
 int Fork();
-
-// void e_pipe(int pipefd[2]);
-// void e_dup2(int a, int b);
 
 #define Execlp(...) \
 	if (execlp(__VA_ARGS__) < 0) { \

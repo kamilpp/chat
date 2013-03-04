@@ -1,88 +1,5 @@
 #include "sys_utils.h"
 
-// TODO V i P
-
-
-// void *e_malloc(size_t size) 
-// {
-// 	void *x;
-// 	if ((x = malloc(size)) == NULL) {
-// 		printf("Error on malloc");
-// 		exit(-1);
-// 	}
-// 	return x;
-// }
-
-// ssize_t e_read(int fd, void * buffer, size_t count)
-// {
-// 	ssize_t n = read(fd, buffer, count);
-// 	if( n < 0 ) {
-// 		perror("Error on read");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
-// ssize_t e_write(int fd, const void * buffer, size_t count)
-// {
-// 	ssize_t n = write(fd, buffer, count);
-// 	if( n < 0 ) {
-// 		perror("Error on write");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
-// int e_open(const char *pathname, int flags, mode_t mode)
-// {
-// 	int n = open(pathname, flags, mode);
-// 	if( n < 0 ) {
-// 		perror("Error on open");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
-// int e_creat(const char *pathname, mode_t mode)
-// {
-// 	int n = creat(pathname, mode);
-// 	if( n < 0 ) {
-// 		perror("Error on create");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
-// int e_close(int fd)
-// {
-// 	int n = close(fd);
-// 	if( n < 0 ) {
-// 		perror("Error on close");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
-// int e_unlink(const char *pathname)
-// {
-// 	int n = unlink(pathname);
-// 	if( n < 0 ) {
-// 		perror("Error on unlink");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
-// off_t e_lseek(int fd, off_t offset, int whence)
-// {
-// 	off_t n = lseek(fd, offset, whence);
-// 	if( n < 0 ) {
-// 		perror("Error on lseek");
-// 		exit(-1);
-// 	}
-// 	return n;
-// }
-
 int Fork() {
 	pid_t x = fork();
 	if (x < 0) {
@@ -91,31 +8,6 @@ int Fork() {
 	return x;
 }
 
-// void e_pipe(int pipefd[2]) {
-// 	if (pipe(pipefd) < 0) {
-// 		printf("Error on pipe");
-// 		exit(-1);
-// 	}
-// }
-
-// void e_dup2(int a, int b) {
-// 	if (dup2(a,b) < 0) {
-// 		printf("Error od dup2");
-// 		exit(-1);
-// 	}
-// }
-
-//MHM... how do it?
-// void e_execlp(const char *file, const char *arg, ...) {
-// 	va_list argp;
-// 	va_start(argp, arg);
-
-// 	if (execlp(file, arg, argp) < 0) {
-// 		printf("Error on execlp");
-// 		exit(-1);
-// 	}
-// 	va_end(argp);
-// }
 
 int Msgget(key_t key, int msgflg) {
 	int x = msgget(key, msgflg);

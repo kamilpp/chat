@@ -3,7 +3,7 @@ SERVERSRC=server_utils
 SHAREDSRC=sys_utils main
 
 LIBS=-lpanel -lncurses
-FLAGS=-Wall -std=c99 -I "./header" -D "_XOPEN_SOURCE"
+FLAGS=-Wall -g -std=c99 -I "./header" -D "_XOPEN_SOURCE"
 
 CC=gcc
 LD=gcc

@@ -19,7 +19,8 @@ void signalJoinRoom() {
 }
 
 void signalRedraw() {
-	
+	PrintfStatusBar();
+	CleanInputBar();
 }
 
 int main(int argc, char *argv[]) {
@@ -38,9 +39,14 @@ int main(int argc, char *argv[]) {
 		
 		while(1) {
 			signal(SIGUSR1, signalJoinRoom); // c99 standard reset handlers after using...
-			signal(69, signalRedraw); 
+			signal(SIGUSR2, signalRedraw); 
+
 			CLEAR(txt);
     		getnstr(txt, 512); 
+
+    		PrintfStatusBar();
+    		CleanInputBar();
+
     		if (IsStringEmptyAndTrim(txt)) {
     			continue;
     		}
@@ -51,28 +57,38 @@ int main(int argc, char *argv[]) {
 					kill(pid, SIGTERM);
 					break;
 				} else if (!strncmp(txt, "/list", 5)) {
+					 // PrintfMessage(GetCurrentTime(), "DEBUG", NICK, ERROR);
 					SndCompactMessage(MSG_LIST, 0);
 				} else if (!strncmp(txt, "/pm", 3)) {
 					char recipient[MAX_USER_NAME_LENGTH] = {0};
 					
 					strcpy(txt, txt+4); // trim /pm
-					
-					strncpy(recipient, txt, strlen(txt) - strlen(strstr(txt, " ")));
-					strcpy(txt, strstr(txt, " "));
-					strcpy(txt, txt + 1);
-					if (IsStringEmptyAndTrim(txt) || IsStringEmptyAndTrim(recipient)) {
+
+					if (IsStringEmptyAndTrim(txt) || strstr(txt, " ") == 0) {
+						PrintfMessage(GetCurrentTime(), "INFO", "Wrong parameters! See /help.", INFO);
 						continue;
 					}
-					
-					PrintfMessage(GetCurrentTime(), "DEBUG", recipient, ERROR);
-					PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
 
-					PrintfMessage(GetCurrentTime(), recipient, txt, PRIVATE_MESSAGE_SEND);
+					strncpy(recipient, txt, strlen(txt) - strlen(strstr(txt, " ")));
+					strcpy(txt, strstr(txt, " "));
+					
+					if (IsStringEmptyAndTrim(txt)) {
+						PrintfMessage(GetCurrentTime(), "INFO", "Wrong parameters! See /help.", INFO);
+						continue;
+					}
+
+					char tmp[512 + MAX_USER_NAME_LENGTH] = {'[', 0};
+					strcpy(tmp + 1, recipient);
+					strcpy(tmp + strlen(tmp), "] ");
+					strcpy(tmp + strlen(tmp), txt);
+
+					PrintfMessage(GetCurrentTime(), recipient, tmp, PRIVATE_MESSAGE_SEND);
 					SndStandardMessage(MSG_PRIVATE, txt, recipient);
 				} else if (!strncmp(txt, "/join", 5)) {
 					strcpy(txt, txt+6);
-					PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
+					// PrintfMessage(GetCurrentTime(), "DEBUG", txt, ERROR);
 					if (IsStringEmptyAndTrim(txt)) {
+						PrintfMessage(GetCurrentTime(), "INFO", "Wrong parameters! See /help.", INFO);
 						continue;
 					}
 					strcpy(roomRequested, txt);
@@ -118,18 +134,25 @@ int main(int argc, char *argv[]) {
 					
 					PrintfMessage(GetCurrentTime(), "LIST", help, INFO);
 					PrintfMessage("", "", userList, INFO);
+
+					kill(parentID, SIGUSR2); // send signal to join room
+
+					// PrintfStatusBar();
+					// CleanInputBar();
 	  			}
 
 				if (RcvStandardMessage(MSG_ROOM) > 0) {
 					PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, MESSAGE_GET);
+					kill(parentID, SIGUSR2); // send signal to join room
 				}
 				
 				if (RcvStandardMessage(MSG_PRIVATE) > 0) {
 					PrintfMessage(GetTime(&standardMessage.content.send_date), standardMessage.content.sender, standardMessage.content.message, PRIVATE_MESSAGE_GET);
+					kill(parentID, SIGUSR2); // send signal to join room
 				}
 				
 				if (RcvCompactMessage(MSG_JOIN) > 0) {
-					debug("Recivied message join");
+					//debug("Recivied message join");
 					kill(parentID, SIGUSR1); // send signal to join room
 				}
 			} 

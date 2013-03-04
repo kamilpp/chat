@@ -127,7 +127,8 @@ int main(int argc, char *argv[]) {
 				
 				if (RcvCompactMessage(MSG_LIST) > 0) {
 					if (!Fork()) {
-						if (ValidateClient(standardMessage.content.sender)) {
+						if (ValidateClient(compactMessage.content.sender)) {
+							// printf("NAME: %s\n", standardMessage.content.sender);
 							return 0;
 						}
 						Printf2("Sending user list");
@@ -194,6 +195,13 @@ int main(int argc, char *argv[]) {
 						return 0;
 					}
 				}
+
+				if (RcvCompactMessage(MSG_HEARTBEAT_SERVER) > 0) {
+					if (!Fork()) {
+						SndCompactMessage(compactMessage.content.value, MSG_HEARTBEAT_SERVER, 0, compactMessage.content.id);
+						return 0;
+					}
+				}
 			}
 		} else {
 			/**
@@ -238,14 +246,8 @@ int main(int argc, char *argv[]) {
 				
 				for (int i = 0; i < MAX_USER_COUNT_PER_SERVER; ++i) {
 					if (id[i] != -1) {
-						if (!Fork()) {
-							if (ValidateClient(username[i])) {
-								return 0;
-							}
-							Printf("Heartbeat detected inactive (unregistred) user - %s", username[i]);
-							UnregisterUser(username[i]);
-							return 0;
-						}
+						Printf("Heartbeat detected inactive (unregistred) user - %s", username[i]);
+						UnregisterUser(username[i]);
 					}
 				} 
 			} /* while 1 */
