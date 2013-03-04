@@ -1,3 +1,5 @@
-Go 
+Chat client and server 
 -------
-Console game Go written in C++ using ncurses lib.
+Project written in C using ncurses and IPC utils.
+
+
